@@ -8,9 +8,6 @@ import com.launchkey.android.authenticator.demo.ui.BaseDemoView
 import com.launchkey.android.authenticator.sdk.DeviceUnlinkedEventCallback
 import com.launchkey.android.authenticator.sdk.error.BaseError
 
-/**
- * Created by armando on 7/8/16.
- */
 class GenericFragmentDemoActivity : BaseDemoActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

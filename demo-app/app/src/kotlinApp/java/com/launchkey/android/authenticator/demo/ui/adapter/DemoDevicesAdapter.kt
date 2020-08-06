@@ -12,9 +12,6 @@ import com.launchkey.android.authenticator.demo.R
 import com.launchkey.android.authenticator.sdk.device.Device
 import java.util.*
 
-/**
- * Created by armando on 7/11/16.
- */
 class DemoDevicesAdapter(private val mContext: Context, devices: List<Device>, private val mItemClickListener: AdapterView.OnItemClickListener?) : BaseAdapter() {
     private var mDevices: List<Device> = ArrayList()
     private val mInternalClickListener: View.OnClickListener

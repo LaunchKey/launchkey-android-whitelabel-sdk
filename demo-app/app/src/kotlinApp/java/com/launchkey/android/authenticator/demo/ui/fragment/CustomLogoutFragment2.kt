@@ -9,9 +9,6 @@ import com.launchkey.android.authenticator.sdk.SimpleOperationCallback
 import com.launchkey.android.authenticator.sdk.error.BaseError
 import com.launchkey.android.authenticator.sdk.session.SessionManager
 
-/**
- * Created by armando on 7/20/16.
- */
 class CustomLogoutFragment2 : BaseDemoFragment() {
 
     private var mLogoutDialog: ProgressDialog? = null

@@ -19,9 +19,6 @@ import com.launchkey.android.authenticator.sdk.DeviceLinkedEventCallback;
 import com.launchkey.android.authenticator.sdk.device.Device;
 import com.launchkey.android.authenticator.sdk.error.BaseError;
 
-/**
- * Created by armando on 7/8/16.
- */
 public class CustomLinkingFragment extends BaseDemoFragment {
 
     private EditText mCode;
@@ -42,10 +39,10 @@ public class CustomLinkingFragment extends BaseDemoFragment {
 
     private View postInflationSetup(View root) {
 
-        mCode = (EditText) root.findViewById(R.id.demo_link_edit_code);
-        mName = (EditText) root.findViewById(R.id.demo_link_edit_name);
+        mCode = root.findViewById(R.id.demo_link_edit_code);
+        mName = root.findViewById(R.id.demo_link_edit_name);
 
-        mProvideName = (CheckBox) root.findViewById(R.id.demo_link_checkbox_devicename_custom);
+        mProvideName = root.findViewById(R.id.demo_link_checkbox_devicename_custom);
         mProvideName.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
@@ -54,9 +51,9 @@ public class CustomLinkingFragment extends BaseDemoFragment {
             }
         });
 
-        mOverrideNameIfUsed = (CheckBox) root.findViewById(R.id.demo_link_checkbox_devicename_override);
+        mOverrideNameIfUsed = root.findViewById(R.id.demo_link_checkbox_devicename_override);
 
-        Button link = (Button) root.findViewById(R.id.demo_link_button);
+        Button link = root.findViewById(R.id.demo_link_button);
         link.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

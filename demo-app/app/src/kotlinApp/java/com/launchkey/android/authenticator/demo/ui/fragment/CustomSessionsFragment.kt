@@ -19,10 +19,6 @@ import com.launchkey.android.authenticator.sdk.session.event.EndSessionEventCall
 import com.launchkey.android.authenticator.sdk.session.event.GetSessionsEventCallback
 import java.util.*
 
-/**
- * Created by armando on 1/11/17.
- */
-
 class CustomSessionsFragment : BaseDemoFragment(), AdapterView.OnItemClickListener {
 
     private val mSessions = ArrayList<Session>()

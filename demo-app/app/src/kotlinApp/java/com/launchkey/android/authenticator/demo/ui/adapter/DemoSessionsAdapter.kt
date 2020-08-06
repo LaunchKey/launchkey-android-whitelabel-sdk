@@ -12,9 +12,6 @@ import com.launchkey.android.authenticator.demo.R
 import com.launchkey.android.authenticator.sdk.session.Session
 import java.util.*
 
-/**
- * Created by armando on 7/11/16.
- */
 class DemoSessionsAdapter(private val mContext: Context, sessions: List<Session>, private val mItemClickListener: AdapterView.OnItemClickListener?) : BaseAdapter() {
     private var mSessions: List<Session> = ArrayList<Session>()
     private val mInternalClickListener: View.OnClickListener

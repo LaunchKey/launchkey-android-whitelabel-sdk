@@ -13,6 +13,35 @@
         android:focusableInTouchMode="true"
         >
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/AppTheme.AppConfigs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/demo_activity_list_feature_config_sdk_key" />
+
+            <EditText
+                android:id="@+id/configs_sdk_key"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="100"
+                android:inputType="number"
+                />
+        </LinearLayout>
+
+
+        <Switch
+            android:id="@+id/configs_ssl_pinning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/demo_activity_list_feature_config_ssl_pinning"
+            android:theme="@style/AppTheme.AppConfigs" />
+
         <Switch
             android:id="@+id/configs_pc"
             android:layout_width="match_parent"
@@ -168,7 +197,7 @@
             android:layout_margin="10dp"
             android:gravity="center"
             android:visibility="gone"
-            tools:text="https://mapi.launchkeynp.com"
+            tools:text="https://mapi.launchkey.com"
             tools:visibility="visible" />
 
         <Button

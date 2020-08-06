@@ -1,6 +1,8 @@
 package com.launchkey.android.authenticator.demo.ui.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,37 +14,31 @@ import android.widget.TextView;
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.sdk.device.Device;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by armando on 7/11/16.
- */
 public class DemoDevicesAdapter extends BaseAdapter {
 
-    private Context mContext;
-    private List<Device> mDevices = new ArrayList<>();
-    private AdapterView.OnItemClickListener mItemClickListener;
-    private View.OnClickListener mInternalClickListener;
+    private final @NonNull Context mContext;
+    private final @NonNull List<Device> mDevices;
+    private final @Nullable
+    AdapterView.OnItemClickListener mItemClickListener;
+    private final @NonNull View.OnClickListener mInternalClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (v != null && v.getTag() != null) {
+                int position = (int) v.getTag();
+
+                if (mItemClickListener != null) {
+                    mItemClickListener.onItemClick(null, v, position, position);
+                }
+            }
+        }
+    };
 
     public DemoDevicesAdapter(Context c, List<Device> devices, AdapterView.OnItemClickListener l) {
         mContext = c;
         mDevices = devices;
         mItemClickListener = l;
-
-        mInternalClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (v != null && v.getTag() != null) {
-                    int position = (int) v.getTag();
-
-                    if (mItemClickListener != null) {
-                        mItemClickListener.onItemClick(null, v, position, position);
-                    }
-                }
-            }
-        };
     }
 
     @Override
@@ -73,16 +69,16 @@ public class DemoDevicesAdapter extends BaseAdapter {
 
         Device d = getItem(position);
 
-        TextView currentDevice = (TextView) v.findViewById(R.id.demo_devices_item_currentdevice);
+        TextView currentDevice = v.findViewById(R.id.demo_devices_item_currentdevice);
         currentDevice.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
 
-        TextView name = (TextView) v.findViewById(R.id.demo_devices_item_name);
+        TextView name = v.findViewById(R.id.demo_devices_item_name);
         name.setText(d.getName());
 
-        TextView status = (TextView) v.findViewById(R.id.demo_devices_item_status);
+        TextView status = v.findViewById(R.id.demo_devices_item_status);
         status.setText(d.getType());
 
-        Button button = (Button) v.findViewById(R.id.demo_devices_item_button);
+        Button button = v.findViewById(R.id.demo_devices_item_button);
         button.setOnClickListener(mInternalClickListener);
         button.setTag(position);
 

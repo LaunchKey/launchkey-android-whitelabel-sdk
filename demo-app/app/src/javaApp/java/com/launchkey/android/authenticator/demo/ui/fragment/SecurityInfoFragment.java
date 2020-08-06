@@ -15,13 +15,10 @@ import com.launchkey.android.authenticator.sdk.security.SecurityService;
 
 import java.util.List;
 
-/**
- * Created by armando on 7/20/16.
- */
 public class SecurityInfoFragment extends BaseDemoFragment implements SecurityService.SecurityStatusListener {
 
-    private TextView mText;
-    private SecurityService mSecService;
+    private TextView textView;
+    private SecurityService securityService;
 
     @Nullable
     @Override
@@ -31,28 +28,28 @@ public class SecurityInfoFragment extends BaseDemoFragment implements SecuritySe
     }
 
     private View postInflationSetup(View root) {
-        mText = root.findViewById(R.id.demo_fragment_securityinfo_text);
+        textView = root.findViewById(R.id.demo_fragment_securityinfo_text);
         return root;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mSecService = SecurityService.getInstance(getActivity());
+        securityService = SecurityService.getInstance(getActivity());
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mSecService.getStatus(this);
+        securityService.getStatus(this);
     }
 
     @Override
-    public void onSecurityStatusUpdate(boolean success, List<SecurityFactor> list, BaseError error) {
+    public void onSecurityStatusUpdate(boolean success, List<SecurityFactor> list, BaseError baseError) {
         if (success) {
             showSecurityInformation(list);
         } else {
-            Utils.simpleSnackbar(mText, getString(R.string.demo_generic_error, error.getMessage()));
+            Utils.simpleSnackbar(textView, getString(R.string.demo_generic_error, baseError.getMessage()));
         }
     }
 
@@ -83,7 +80,7 @@ public class SecurityInfoFragment extends BaseDemoFragment implements SecuritySe
             message = getString(R.string.demo_activity_list_feature_security_info_no_message);
         }
 
-        mText.setText(message);
+        textView.setText(message);
     }
 
     private String getFactorName(SecurityFactor f) {

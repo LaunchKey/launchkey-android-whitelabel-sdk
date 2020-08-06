@@ -2,21 +2,38 @@ package com.launchkey.android.authenticator.demo.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.sdk.DeviceUnlinkedEventCallback;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback;
+import com.launchkey.android.authenticator.sdk.core.exception.DeviceUnlinkedButFailedToNotifyServerException;
 
-/**
- * Created by armando on 7/8/16.
- */
 public class GenericFragmentDemoActivity extends BaseDemoActivity {
 
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_FRAGMENT_CLASS = "fragment_class";
+    public static final String EXTRA_GO_BACK_ON_UNLINK = "go_back_on_unlink";
+
+    private boolean goBackOnUnlink;
+    private final @NonNull UnlinkDeviceEventCallback unlinkDeviceEventCallback = new UnlinkDeviceEventCallback() {
+        @Override
+        public void onSuccess(final @NonNull Device device) {
+            if (device.isCurrent() && goBackOnUnlink) {
+                finish();
+            }
+        }
+
+        @Override
+        public void onFailure(final @NonNull Exception e) {
+            if (e instanceof DeviceUnlinkedButFailedToNotifyServerException && goBackOnUnlink) {
+                finish();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,6 +63,8 @@ public class GenericFragmentDemoActivity extends BaseDemoActivity {
             return;
         }
 
+        goBackOnUnlink = extras == null ? false : extras.getBoolean(EXTRA_GO_BACK_ON_UNLINK);
+
         //Instantiate the Fragment by name that was passed via extra (Bundle) and if not null,
         // then place it in the container.
 
@@ -64,12 +83,17 @@ public class GenericFragmentDemoActivity extends BaseDemoActivity {
                     .add(R.id.demo_activity_fragment_container, f)
                     .commit();
         }
+    }
 
-        getAuthenticatorManager().registerForEvents(new DeviceUnlinkedEventCallback() {
-            @Override
-            public void onEventResult(boolean b, BaseError baseError, Object o) {
-                finish();
-            }
-        });
+    @Override
+    public void onResume() {
+        super.onResume();
+        getAuthenticatorManager().registerForEvents(unlinkDeviceEventCallback);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getAuthenticatorManager().unregisterForEvents(unlinkDeviceEventCallback);
     }
 }

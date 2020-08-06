@@ -80,7 +80,9 @@
     <string name="demo_activity_list_feature_securityinfo">Security Information</string>
 
     <string name="demo_activity_list_feature_config">Config Testing</string>
-    <string name="demo_activity_list_feature_config_pc">PIN Code</string>
+    <string name="demo_activity_list_feature_config_sdk_key">SDK Key</string>
+    <string name="demo_activity_list_feature_config_ssl_pinning">SSL Pinning</string>
+    <string name="demo_activity_list_feature_config_pc">PIN Code</string>>>
     <string name="demo_activity_list_feature_config_cc">Circle Code</string>
     <string name="demo_activity_list_feature_config_w">Wearables</string>
     <string name="demo_activity_list_feature_config_l">Locations</string>

@@ -23,19 +23,52 @@ import com.launchkey.android.authenticator.sdk.session.event.GetSessionsEventCal
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by armando on 1/11/17.
- */
-
 public class CustomSessionsFragment extends BaseDemoFragment implements AdapterView.OnItemClickListener {
 
+    private final SessionManager sessionManager = SessionManager.getInstance();
     private List<Session> mSessions = new ArrayList<>();
     private ListView mList;
-    private DemoSessionsAdapter mAdapter;
-    private SessionManager mSessionManager;
-    private GetSessionsEventCallback mGetSessionsCallback;
-    private EndSessionEventCallback mEndSessionCallback;
-    private EndAllSessionsEventCallback mEndAllSessionsCallback;
+    private final EndSessionEventCallback endSessionEventCallback = new EndSessionEventCallback() {
+        @Override
+        public void onEventResult(boolean successful, BaseError error, Session session) {
+            if (successful) {
+                refresh();
+                Utils.simpleSnackbar(mList, "Session \"" + session.getName() + "\" ended");
+            } else {
+                Utils.simpleSnackbarForBaseError(mList, error);
+            }
+        }
+    };
+    private final EndAllSessionsEventCallback endAllSessionsEventCallback = new EndAllSessionsEventCallback() {
+        @Override
+        public void onEventResult(boolean successful, BaseError error, Object o) {
+            if (successful) {
+                refresh();
+                Utils.simpleSnackbar(mList, "All sessions ended", Snackbar.LENGTH_SHORT);
+            } else {
+                Utils.simpleSnackbarForBaseError(mList, error);
+            }
+        }
+    };
+    private DemoSessionsAdapter adapter;
+    private final GetSessionsEventCallback getSessionsEventCallback = new GetSessionsEventCallback() {
+        @Override
+        public void onEventResult(boolean successful, BaseError error, List<Session> sessions) {
+            if (successful) {
+                mSessions.clear();
+                mSessions.addAll(sessions);
+                adapter.notifyDataSetChanged();
+            } else {
+                Utils.simpleSnackbarForBaseError(mList, error);
+            }
+        }
+    };
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
 
     @Nullable
     @Override
@@ -46,17 +79,17 @@ public class CustomSessionsFragment extends BaseDemoFragment implements AdapterV
 
     private View onLayoutPreprocessing(View root) {
 
-        mAdapter = new DemoSessionsAdapter(getActivity(), mSessions, this);
+        adapter = new DemoSessionsAdapter(getActivity(), mSessions, this);
 
-        mList = (ListView) root.findViewById(R.id.demo_fragment_sessions_list);
-        mList.setAdapter(mAdapter);
+        mList = root.findViewById(R.id.demo_fragment_sessions_list);
+        mList.setAdapter(adapter);
 
-        final Button clearAll = (Button) root.findViewById(R.id.demo_fragment_sessions_button);
+        final Button clearAll = root.findViewById(R.id.demo_fragment_sessions_button);
         clearAll.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                mSessionManager.endAllSessions(null);
+                sessionManager.endAllSessions(null);
             }
         });
 
@@ -67,65 +100,30 @@ public class CustomSessionsFragment extends BaseDemoFragment implements AdapterV
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mSessionManager = SessionManager.getInstance(getActivity());
-        mGetSessionsCallback = new GetSessionsEventCallback() {
-            @Override
-            public void onEventResult(boolean successful, BaseError error, List<Session> sessions) {
-                if (successful) {
-                    mSessions.clear();
-                    mSessions.addAll(sessions);
-                    mAdapter.notifyDataSetChanged();
-                } else {
-                    Utils.simpleSnackbarForBaseError(mList, error);
-                }
-            }
-        };
-
-        mEndSessionCallback = new EndSessionEventCallback() {
-            @Override
-            public void onEventResult(boolean successful, BaseError error, Session session) {
-                if (successful) {
-                    refresh();
-                    Utils.simpleSnackbar(mList, "Session \"" + session.getName() + "\" ended");
-                } else {
-                    Utils.simpleSnackbarForBaseError(mList, error);
-                }
-            }
-        };
-
-        mEndAllSessionsCallback = new EndAllSessionsEventCallback() {
-            @Override
-            public void onEventResult(boolean successful, BaseError error, Object o) {
-                if (successful) {
-                    refresh();
-                    Utils.simpleSnackbar(mList, "All sessions ended", Snackbar.LENGTH_SHORT);
-                } else {
-                    Utils.simpleSnackbarForBaseError(mList, error);
-                }
-            }
-        };
+        if (savedInstanceState == null) {
+            refresh();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mSessionManager.registerForEvents(mGetSessionsCallback, mEndSessionCallback, mEndAllSessionsCallback);
-        refresh();
+        sessionManager.registerForEvents(getSessionsEventCallback, endSessionEventCallback, endAllSessionsEventCallback);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mSessionManager.unregisterForEvents(mGetSessionsCallback, mEndSessionCallback, mEndAllSessionsCallback);
+        sessionManager.unregisterForEvents(getSessionsEventCallback, endSessionEventCallback, endAllSessionsEventCallback);
     }
 
     private void refresh() {
-        mSessionManager.getSessions();
+        sessionManager.getSessions();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Session session = mAdapter.getItem(position);
-        mSessionManager.endSession(session, null);
+        Session session = adapter.getItem(position);
+        sessionManager.endSession(session, null);
     }
 }

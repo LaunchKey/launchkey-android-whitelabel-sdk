@@ -12,9 +12,6 @@ import com.launchkey.android.authenticator.sdk.error.BaseError
 import com.launchkey.android.authenticator.sdk.security.SecurityFactor
 import com.launchkey.android.authenticator.sdk.security.SecurityService
 
-/**
- * Created by armando on 7/20/16.
- */
 class SecurityInfoFragment : BaseDemoFragment(), SecurityService.SecurityStatusListener {
 
     private var mText: TextView? = null
