@@ -1,6 +1,8 @@
 package com.launchkey.android.authenticator.demo.ui.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,38 +14,31 @@ import android.widget.TextView;
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.sdk.session.Session;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Created by armando on 7/11/16.
- */
 public class DemoSessionsAdapter extends BaseAdapter {
 
-    private Context mContext;
-    private List<Session> mSessions = new ArrayList<>();
-    private AdapterView.OnItemClickListener mItemClickListener;
-    private View.OnClickListener mInternalClickListener;
+    private final @NonNull Context context;
+    private final @NonNull List<Session> mSessions;
+    private final @Nullable AdapterView.OnItemClickListener mItemClickListener;
+    private final @NonNull View.OnClickListener mInternalClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (v != null && v.getTag() != null) {
+                int position = (int) v.getTag();
 
-    public DemoSessionsAdapter(Context c, List<Session> sessions, AdapterView.OnItemClickListener l) {
-        mContext = c;
-        mSessions = sessions;
-        mItemClickListener = l;
-
-        mInternalClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (v != null && v.getTag() != null) {
-                    int position = (int) v.getTag();
-
-                    if (mItemClickListener != null) {
-                        mItemClickListener.onItemClick(null, v, position, position);
-                    }
+                if (mItemClickListener != null) {
+                    mItemClickListener.onItemClick(null, v, position, position);
                 }
             }
-        };
+        }
+    };
+
+    public DemoSessionsAdapter(Context c, List<Session> sessions, AdapterView.OnItemClickListener l) {
+        context = c;
+        mSessions = sessions;
+        mItemClickListener = l;
     }
 
     @Override
@@ -69,8 +64,7 @@ public class DemoSessionsAdapter extends BaseAdapter {
         View v = convertView;
 
         if (v == null) {
-            v = LayoutInflater
-                    .from(mContext)
+            v = LayoutInflater.from(context)
                     .inflate(R.layout.demo_authorizations_item, parent, false);
         }
 
@@ -78,27 +72,19 @@ public class DemoSessionsAdapter extends BaseAdapter {
 
         //fetch an application's icon via its url with Application.getAppIcon()
 
-        TextView name = (TextView) v.findViewById(R.id.demo_authorizations_item_name);
+        TextView name = v.findViewById(R.id.demo_authorizations_item_name);
         name.setText(s.getName());
 
         //TODO: Update usage of ID as placeholder for potential context being sent
-        TextView context = (TextView) v.findViewById(R.id.demo_authorizations_item_context);
+        TextView context = v.findViewById(R.id.demo_authorizations_item_context);
         context.setText(s.getId());
 
-        long millisAgo = s.getCreatedAgoMillis(mContext);
+        long millisAgo = s.getCreatedAgoMillis(this.context);
 
-        TextView action = (TextView) v.findViewById(R.id.demo_authorizations_item_text_action);
+        TextView action = v.findViewById(R.id.demo_authorizations_item_text_action);
         action.setText(String.format(Locale.getDefault(), "%d seconds ago", (millisAgo / 1000)));
 
-        /*
-        TextView status = (TextView) v.findViewById(R.id.demo_authorizations_item_text_status);
-        status.setText(a.getStatus().toUpperCase());
-
-        TextView transactional = (TextView) v.findViewById(R.id.demo_authorizations_item_text_transactional);
-        transactional.setText(a.isTransactional() ? "TRANSACTIONAL" : "");
-        */
-
-        Button button = (Button) v.findViewById(R.id.demo_authorizations_item_button);
+        Button button = v.findViewById(R.id.demo_authorizations_item_button);
         button.setText("LOG OUT");
         button.setOnClickListener(mInternalClickListener);
         button.setTag(position);

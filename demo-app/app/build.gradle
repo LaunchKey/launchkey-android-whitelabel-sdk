@@ -3,32 +3,57 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-android-extensions'
     id 'org.ajoberstar.grgit'
+    id 'com.google.gms.google-services'
+}
+
+def keystoreVarSet = System.env.ANDROID_KEY != null
+def keystorePropertiesVarSet = System.env.KEYSTORE_PROPERTIES != null
+def signBuild = keystoreVarSet && keystorePropertiesVarSet
+def keystorePropertiesFile
+def keystoreProperties
+if (signBuild) {
+
+    // Create a variable called keystorePropertiesFile, and initialize it to your
+    // keystore.properties file, in the rootProject folder.
+    keystorePropertiesFile = rootProject.file("$System.env.KEYSTORE_PROPERTIES")
+
+    // Initialize a new Properties() object called keystoreProperties.
+    keystoreProperties = new Properties()
+
+    // Load your keystore.properties file into the keystoreProperties object.
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+    println "Signing has been configured"
+} else {
+    String reason = "Signing will not occur because environment variables have not been set correctly because:\n"
+    if (!keystoreVarSet) {
+        reason += "ANDROID_KEY var not defined\n"
+    }
+    if (!keystorePropertiesVarSet) {
+        reason += "KEYSTORE_PROPERTIES var not defined\n"
+    }
+    println reason
 }
 
 // Used to get commit of current HEAD and store it in
 import org.ajoberstar.grgit.Grgit
-Grgit grgit = Grgit.open(dir: '../')
+Grgit grgit = Grgit.open()
 
 android {
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "30.0.0"
+    ndkVersion "21.3.6528147"
     compileSdkVersion 29
 
-	lintOptions {
-		lintConfig file("lint.xml")
-	}
-
     defaultConfig {
-        defaultPublishConfig 'release'
-        publishNonDefault true
-
         applicationId "com.launchkey.android.authenticator.demo"
         minSdkVersion 15
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
+        defaultPublishConfig getBuildToUpload()
     }
 
-    flavorDimensions "languageApp"
+    flavorDimensions "languageApp", "env", "mapProvider"
     productFlavors {
         javaApp {
             dimension "languageApp"
@@ -38,13 +63,45 @@ android {
             dimension "languageApp"
             applicationIdSuffix ".kotlinApp"
         }
+        prod {
+            dimension "env"
+        }
+        np {
+            dimension "env"
+        }
+        beta {
+            dimension "env"
+        }
+        googleMaps {
+            dimension 'mapProvider'
+            versionNameSuffix ".googleMaps"
+        }
+        openStreetMaps {
+            dimension "mapProvider"
+            versionNameSuffix ".openStreetMaps"
+        }
     }
+
+    if (signBuild) {
+        signingConfigs {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file("$System.env.ANDROID_KEY")
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     buildTypes {
         String[] releaseProguardFiles = [getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro']
         release {
             minifyEnabled true
             proguardFiles releaseProguardFiles
             resValue("string", "demo_commit_hash", grgit.head().id)
+            if (signBuild) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
             minifyEnabled true
@@ -52,10 +109,40 @@ android {
             resValue("string", "demo_commit_hash", grgit.head().id)
         }
     }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+
+        unitTests.all {
+            // All the usual Gradle options.
+            testLogging {
+                events "passed", "skipped", "failed", "standardOut", "standardError"
+                outputs.upToDateWhen { false }
+                showStandardStreams = true
+            }
+
+            reports {
+                junitXml.enabled = true
+                html.enabled = true
+            }
+        }
+    }
+
+    lintOptions {
+        lintConfig file("lint.xml")
+        abortOnError false
+    }
+}
+
+//This enables setting which build to upload via command line argument. Ex. "-PbuildUpload=debug"
+def getBuildToUpload(){
+    return hasProperty('buildUpload') ? buildUpload : "release"
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar', '*.aar'], dir: 'libs')
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
 
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
@@ -68,22 +155,23 @@ dependencies {
     implementation "com.android.support:design:$supportLibsVersion"
 
     // Google Play Services
+    // Last versions that didn't use androidx
     implementation "com.google.android.gms:play-services-base:16.1.0"
     implementation "com.google.android.gms:play-services-location:16.0.0"
     implementation "com.google.android.gms:play-services-wearable:16.0.1"
 
     // Firebase
-    implementation "com.google.firebase:firebase-core:16.0.7"
-    implementation "com.google.firebase:firebase-messaging:17.3.4"
+    // Last versions that supported minsdkversion 15
+    implementation "com.google.firebase:firebase-core:16.0.9"
+    implementation "com.google.firebase:firebase-messaging:17.6.0"
 
     // Open Street Maps updated to latest version for API 29
-    implementation 'org.osmdroid:osmdroid-android:6.1.2@aar'
+    openStreetMapsImplementation 'org.osmdroid:osmdroid-android:6.1.2@aar'
+
+    // Google Maps
+    googleMapsImplementation 'com.google.android.gms:play-services-maps:16.1.0'
 
     // Auth SDK
-    implementation files('libs/lk-auth-sdk/lk-auth-sdk-4.9.0.aar')
+    implementation LaunchKeyCoreSDK
+    implementation LaunchKeyUISDK
 }
-
-// Applies the lk-proguard-rules and adds dependencies for the Auth SDK
-apply from: 'libs/lk-auth-sdk/LaunchKeyPlugin.gradle'
-
-apply plugin: 'com.google.gms.google-services'

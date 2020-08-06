@@ -9,9 +9,6 @@ import android.view.View
 import com.launchkey.android.authenticator.sdk.error.*
 
 
-/**
- * Created by armando on 4/15/16.
- */
 object Utils {
     fun show(d: Dialog?) {
         if (d != null && !d.isShowing) {

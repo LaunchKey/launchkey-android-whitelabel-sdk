@@ -1,6 +1,7 @@
 package com.launchkey.android.authenticator.demo.app;
 
 import android.app.Application;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -9,13 +10,15 @@ import android.util.Log;
 import android.view.View;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.demo.util.KeyStorage;
+import com.launchkey.android.authenticator.demo.ui.activity.AuthRequestActivity;
 import com.launchkey.android.authenticator.sdk.AuthenticatorConfig;
 import com.launchkey.android.authenticator.sdk.AuthenticatorManager;
 import com.launchkey.android.authenticator.sdk.DeviceKeyPairGeneratedEventCallback;
 import com.launchkey.android.authenticator.sdk.DeviceLinkedEventCallback;
 import com.launchkey.android.authenticator.sdk.DeviceUnlinkedEventCallback;
-import com.launchkey.android.authenticator.sdk.SimpleOperationCallback;
+import com.launchkey.android.authenticator.sdk.auth.AuthRequest;
+import com.launchkey.android.authenticator.sdk.auth.AuthRequestManager;
+import com.launchkey.android.authenticator.sdk.auth.event.GetAuthRequestEventCallback;
 import com.launchkey.android.authenticator.sdk.device.Device;
 import com.launchkey.android.authenticator.sdk.error.BaseError;
 import com.launchkey.android.authenticator.sdk.ui.theme.AuthenticatorTheme;
@@ -26,17 +29,7 @@ public class DemoApplication extends Application {
 
     public static final String TAG = DemoApplication.class.getSimpleName();
 
-    private AuthenticatorManager manager = null;
-
-    public void initialize(String sdkKey) {
-
-        int keyPairSizeBits = AuthenticatorConfig.Builder.KEYSIZE_MINIMUM;
-        //int keyPairSizeBits = AuthenticatorConfig.Builder.KEYSIZE_MEDIUM;
-        //keyPairSizeBits = 3072; //Could also assign the actual value in bits.
-
-        final int geofencingDelaySeconds = 60;
-        final int proximityDelaySeconds = 60;
-
+    public void initialize(final String sdkKey) {
         AuthenticatorTheme customTheme = new AuthenticatorTheme.Builder(this)
                 .appBar(Color.DKGRAY, Color.BLUE)
                 .authRequestAppBar(View.GONE)
@@ -66,65 +59,51 @@ public class DemoApplication extends Application {
                 .authContentViewBackground(Color.parseColor("#00695C"))
                 .build();
 
-        final String finalSdkKey = sdkKey != null ? sdkKey : getString(R.string.authenticator_sdk_key);
-
-        AuthenticatorConfig.Builder configBuilder = new AuthenticatorConfig.Builder(this, finalSdkKey)
-                .activationDelayGeofencing(geofencingDelaySeconds)
-                .activationDelayProximity(proximityDelaySeconds)
-                .keyPairSize(keyPairSizeBits)
-                .theme(R.style.DemoAppTheme); // Built theme programmatically in the next line
+        final AuthenticatorConfig config = new AuthenticatorConfig.Builder(this, sdkKey != null ? sdkKey : getString(R.string.authenticator_sdk_key))
+                .activationDelayGeofencing(60)
+                .activationDelayProximity(60)
+                .keyPairSize(AuthenticatorConfig.Builder.KEYSIZE_MINIMUM)
+                .sslPinning(Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
+                .theme(R.style.DemoAppTheme) // Built theme programmatically in the next line
                 //.theme(customTheme)
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                configBuilder.sslPinning(true);
-        }
+                .build();
 
-        AuthenticatorConfig config =  configBuilder.build();
-
-        manager = AuthenticatorManager.getInstance();
+        AuthenticatorManager manager = AuthenticatorManager.getInstance();
         manager.initialize(config);
 
-        KeyStorage.getInstance(this).setKey(finalSdkKey);
-
         DeviceLinkedEventCallback onDeviceLink = new DeviceLinkedEventCallback() {
-
             @Override
             public void onEventResult(boolean b, BaseError baseError, Device device) {
-
                 final String deviceName = b ? device.getName() : null;
                 Log.i(TAG, String.format(Locale.getDefault(), "Link-event=%b Device-name=%s", b, deviceName));
             }
         };
 
         DeviceUnlinkedEventCallback onDeviceUnlink = new DeviceUnlinkedEventCallback() {
-
             @Override
             public void onEventResult(boolean b, BaseError baseError, Object o) {
-
                 Log.i(TAG, String.format(Locale.getDefault(), "Unlink-event=%b error=%s", b, baseError));
             }
         };
 
         DeviceKeyPairGeneratedEventCallback onDeviceKey = new DeviceKeyPairGeneratedEventCallback() {
-
             @Override
             public void onEventResult(boolean b, BaseError baseError, Object o) {
-
                 Log.i(TAG, "Device key pair now generated.");
             }
         };
 
         manager.registerForEvents(onDeviceLink, onDeviceUnlink, onDeviceKey);
 
-        if (manager.isDeviceLinked()) {
-            Log.i(TAG, "Linked. About to send metrics...");
-            manager.sendMetrics(new SimpleOperationCallback<Void>() {
+        GetAuthRequestEventCallback getAuthRequestEventCallback = new GetAuthRequestEventCallback() {
+            @Override
+            public void onEventResult(boolean successful, BaseError error, AuthRequest result) {
+                final Intent i = new Intent(DemoApplication.this, AuthRequestActivity.class);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            }
+        };
 
-                @Override
-                public void onResult(boolean ok, BaseError e, Void v) {
-
-                    Log.i(TAG, "Metrics delivery. OK=" + ok + " E=" + e);
-                }
-            });
-        }
+        AuthRequestManager.getInstance().registerForEvents(getAuthRequestEventCallback);
     }
 }

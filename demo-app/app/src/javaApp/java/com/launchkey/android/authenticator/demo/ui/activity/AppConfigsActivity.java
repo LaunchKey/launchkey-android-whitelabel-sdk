@@ -11,15 +11,15 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.demo.util.KeyStorage;
 import com.launchkey.android.authenticator.sdk.AuthenticatorConfig;
+import com.launchkey.android.authenticator.sdk.AuthenticatorManager;
 import com.launchkey.android.authenticator.sdk.SimpleOperationCallback;
 import com.launchkey.android.authenticator.sdk.error.BaseError;
 import com.launchkey.android.authenticator.sdk.security.SecurityService;
 
 public class AppConfigsActivity extends BaseDemoActivity {
-
-
+    private EditText mSdkKey;
+    private Switch mSslPinning;
     private Switch mPinCode, mCircleCode, mWearables, mLocations, mFingerprintScan;
     private EditText mDelayWearables, mDelayLocations;
     private EditText mAuthFailure, mAutoUnlink, mAutoUnlinkWarning;
@@ -30,6 +30,9 @@ public class AppConfigsActivity extends BaseDemoActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.demo_activity_configs);
+
+        mSdkKey = findViewById(R.id.configs_sdk_key);
+        mSslPinning = findViewById(R.id.configs_ssl_pinning);
 
         mPinCode = findViewById(R.id.configs_pc);
         mCircleCode = findViewById(R.id.configs_cc);
@@ -48,15 +51,13 @@ public class AppConfigsActivity extends BaseDemoActivity {
         mEndpoint = findViewById(R.id.configs_endpoint);
 
         findViewById(R.id.configs_button).setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
-
                 onReinitSdk();
             }
         });
 
-        ((TextView)findViewById(R.id.configs_build_hash)).setText(
+        ((TextView) findViewById(R.id.configs_build_hash)).setText(
                 getString(
                         R.string.demo_commit_hash_title,
                         getString(R.string.demo_commit_hash)));
@@ -99,14 +100,11 @@ public class AppConfigsActivity extends BaseDemoActivity {
             return;
         }
 
-        final AuthenticatorConfig config = getAuthenticatorManager().getConfig();
-
-        if (config == null) {
-            return;
-        }
+        final AuthenticatorConfig config = AuthenticatorManager.getInstance().getConfig();
 
         // Update UI to match SDK config passed upon initialization
-
+        mSdkKey.setText(config.sdkKey());
+        mSslPinning.setChecked(config.isSslPinningRequired());
         mPinCode.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_PIN));
         mCircleCode.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_CIRCLE));
         mWearables.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_PROXIMITY));
@@ -120,7 +118,6 @@ public class AppConfigsActivity extends BaseDemoActivity {
         mAllowChangesWhenUnlinked.setChecked(config.areSecurityChangesAllowedWhenUnlinked());
 
         try {
-
             final String subdomain = getString(R.string.lk_auth_sdk_oendsub);
             final String domain = getString(R.string.lk_auth_sdk_oenddom);
             final String endpoint = getString(
@@ -133,15 +130,15 @@ public class AppConfigsActivity extends BaseDemoActivity {
     }
 
     private void onReinitSdk() {
+        // Reinitialize the SDK with whichever key we had last
+        final String key = mSdkKey.getText().toString();
 
-        final String key = KeyStorage.getInstance(this).getKey();
-
-        if (key == null || key.trim().isEmpty()) {
-
+        if (key.trim().isEmpty()) {
             showError("Key cannot be null or empty.");
             return;
         }
 
+        final boolean sslPinningEnabled = mSslPinning.isChecked();
         final boolean allowPinCode = mPinCode.isChecked();
         final boolean allowCircleCode = mCircleCode.isChecked();
         final boolean allowWearables = mWearables.isChecked();
@@ -229,7 +226,6 @@ public class AppConfigsActivity extends BaseDemoActivity {
         final AuthenticatorConfig config;
 
         try {
-
             config = new AuthenticatorConfig.Builder(this, key)
                     .allowAuthMethod(SecurityService.FACTOR_PIN, allowPinCode)
                     .allowAuthMethod(SecurityService.FACTOR_CIRCLE, allowCircleCode)
@@ -241,27 +237,31 @@ public class AppConfigsActivity extends BaseDemoActivity {
                     .thresholdAuthFailure(authFailure)
                     .thresholdAutoUnlink(autoUnlink, autoUnlinkWarning)
                     .allowSecurityChangesWhenUnlinked(allowChangesWhenUnlinked)
+                    .keyPairSize(AuthenticatorConfig.Builder.KEYSIZE_MINIMUM)
+                    .sslPinning(sslPinningEnabled)
+                    .theme(R.style.DemoAppTheme)
                     .build();
         } catch (IllegalArgumentException e) {
-
             showError(e.getMessage());
             return;
         }
 
-        // Force-unlink to clear any data before re-initializing
-        getAuthenticatorManager().unlinkCurrentDevice(new SimpleOperationCallback() {
-
-            @Override
-            public void onResult(boolean successful, BaseError error, Object extra) {
-
-                getAuthenticatorManager().initialize(config);
-                finish();
-            }
-        });
+        if (getAuthenticatorManager().isDeviceLinked()) {
+            // Force-unlink to clear any data before re-initializing
+            getAuthenticatorManager().unlinkCurrentDevice(new SimpleOperationCallback() {
+                @Override
+                public void onResult(boolean successful, BaseError error, Object extra) {
+                    getAuthenticatorManager().initialize(config);
+                    finish();
+                }
+            });
+        } else {
+            getAuthenticatorManager().initialize(config);
+            finish();
+        }
     }
 
     private void showError(String message) {
-
         new AlertDialog.Builder(this)
                 .setTitle("Could not reinitialize SDK")
                 .setMessage(message)

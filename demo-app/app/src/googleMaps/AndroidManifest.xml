@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>        <!-- Google Maps v2 API KEY - same Google Dev Console project as GCM/FCM -->
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="@string/authenticator_googlemapsv2_key"/>
+    </application>
+</manifest>

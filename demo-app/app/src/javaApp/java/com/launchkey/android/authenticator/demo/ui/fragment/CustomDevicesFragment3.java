@@ -12,6 +12,7 @@ import android.widget.ListView;
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.ui.adapter.DemoDevicesAdapter;
 import com.launchkey.android.authenticator.demo.util.Utils;
+import com.launchkey.android.authenticator.sdk.AuthenticatorManager;
 import com.launchkey.android.authenticator.sdk.SimpleOperationCallback;
 import com.launchkey.android.authenticator.sdk.device.Device;
 import com.launchkey.android.authenticator.sdk.device.DeviceManager;
@@ -22,17 +23,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Created by armando on 7/8/16.
- */
 public class CustomDevicesFragment3 extends BaseDemoFragment
         implements AdapterView.OnItemClickListener {
 
-    private List<Device> mDevices = new ArrayList<>();
-    private ListView mList;
-    private DemoDevicesAdapter mAdapter;
-    private DeviceManager mDeviceManager;
-    private GetDevicesEventCallback mGetDevicesCallback;
+    private final DeviceManager deviceManager = DeviceManager.getInstance();
+    private List<Device> devices = new ArrayList<>();
+    private ListView listView;
+    private DemoDevicesAdapter adapter;
+    private final GetDevicesEventCallback getDevicesEventCallback = new GetDevicesEventCallback() {
+
+        @Override
+        public void onEventResult(boolean successful, BaseError error, List<Device> devices) {
+
+            if (successful) {
+                CustomDevicesFragment3.this.devices.clear();
+                CustomDevicesFragment3.this.devices.addAll(devices);
+                adapter.notifyDataSetChanged();
+            } else {
+                Utils.simpleSnackbarForBaseError(listView, error);
+            }
+        }
+    };
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
 
     @Nullable
     @Override
@@ -43,10 +60,10 @@ public class CustomDevicesFragment3 extends BaseDemoFragment
     }
 
     private View postInflationSetup(View root) {
-        mAdapter = new DemoDevicesAdapter(getActivity(), mDevices, this);
+        adapter = new DemoDevicesAdapter(getActivity(), devices, this);
 
-        mList = (ListView) root.findViewById(R.id.demo_fragment_devices_list);
-        mList.setAdapter(mAdapter);
+        listView = (ListView) root.findViewById(R.id.demo_fragment_devices_list);
+        listView.setAdapter(adapter);
 
         return root;
     }
@@ -55,60 +72,50 @@ public class CustomDevicesFragment3 extends BaseDemoFragment
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mDeviceManager = DeviceManager.getInstance(getActivity());
-        mGetDevicesCallback = new GetDevicesEventCallback() {
-
-            @Override
-            public void onEventResult(boolean successful, BaseError error, List<Device> devices) {
-
-                if (successful) {
-                    mDevices.clear();
-                    mDevices.addAll(devices);
-                    mAdapter.notifyDataSetChanged();
-                } else {
-                    Utils.simpleSnackbarForBaseError(mList, error);
-                }
-            }
-        };
+        if (savedInstanceState == null) {
+            deviceManager.getDevices();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mDeviceManager.registerForEvents(mGetDevicesCallback);
-        mDeviceManager.getDevices();
+        deviceManager.registerForEvents(getDevicesEventCallback);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mDeviceManager.unregisterForEvents(mGetDevicesCallback);
+        deviceManager.unregisterForEvents(getDevicesEventCallback);
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        if (AuthenticatorManager.getInstance().isDeviceLinked()) {
+            Device deviceToUnlink = adapter.getItem(position);
+            deviceManager.unlinkDevice(deviceToUnlink, new SimpleOperationCallback<Device>() {
 
-        Device deviceToUnlink = mAdapter.getItem(position);
-        mDeviceManager.unlinkDevice(deviceToUnlink, new SimpleOperationCallback<Device>() {
+                @Override
+                public void onResult(boolean successful, BaseError error, Device device) {
 
-            @Override
-            public void onResult(boolean successful, BaseError error, Device device) {
-
-                if (successful) {
-                    String message = String.format(Locale.getDefault(), "Device \"%s\" unlinked", device.getName());
-                    Snackbar.make(mList, message, Snackbar.LENGTH_INDEFINITE)
-                            .setAction("Return", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    Utils.finish(CustomDevicesFragment3.this);
-                                }
-                            })
-                            .show();
-                    mDeviceManager.getDevices();
-                } else {
-                    Utils.simpleSnackbarForBaseError(mList, error);
+                    if (successful) {
+                        String message = String.format(Locale.getDefault(), "Device \"%s\" unlinked", device.getName());
+                        Snackbar.make(listView, message, Snackbar.LENGTH_INDEFINITE)
+                                .setAction("Return", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        Utils.finish(CustomDevicesFragment3.this);
+                                    }
+                                })
+                                .show();
+                        if (AuthenticatorManager.getInstance().isDeviceLinked()) {
+                            deviceManager.getDevices();
+                        }
+                    } else {
+                        Utils.simpleSnackbarForBaseError(listView, error);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 }

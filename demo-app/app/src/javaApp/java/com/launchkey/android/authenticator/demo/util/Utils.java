@@ -21,9 +21,6 @@ import com.launchkey.android.authenticator.sdk.error.RequestArgumentError;
 import com.launchkey.android.authenticator.sdk.error.UnexpectedCertificateError;
 
 
-/**
- * Created by armando on 4/15/16.
- */
 public final class Utils {
     public static void show(Dialog d) {
         if (d != null && !d.isShowing()) {

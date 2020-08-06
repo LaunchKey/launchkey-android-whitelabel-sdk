@@ -10,9 +10,6 @@ import android.widget.TextView
 import com.launchkey.android.authenticator.demo.R
 
 
-/**
- * Created by armando on 7/8/16.
- */
 class DemoFeatureAdapter(private val mContext: Context, i: IntArray) : BaseAdapter() {
     private var mItems = IntArray(0)
 

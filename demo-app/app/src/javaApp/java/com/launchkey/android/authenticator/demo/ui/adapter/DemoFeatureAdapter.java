@@ -1,6 +1,7 @@
 package com.launchkey.android.authenticator.demo.ui.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,13 +11,10 @@ import android.widget.TextView;
 import com.launchkey.android.authenticator.demo.R;
 
 
-/**
- * Created by armando on 7/8/16.
- */
 public class DemoFeatureAdapter extends BaseAdapter {
 
-    private Context mContext;
-    private int[] mItems = new int[0];
+    private final @NonNull Context mContext;
+    private final @NonNull int[] mItems;
 
     public DemoFeatureAdapter(Context context, int[] i) {
         mContext = context;
@@ -43,8 +41,7 @@ public class DemoFeatureAdapter extends BaseAdapter {
         TextView v = (TextView) convertView;
 
         if (v == null) {
-            v = (TextView) LayoutInflater
-                    .from(mContext)
+            v = (TextView) LayoutInflater.from(mContext)
                     .inflate(R.layout.demo_activity_list_item, parent, false);
         }
 

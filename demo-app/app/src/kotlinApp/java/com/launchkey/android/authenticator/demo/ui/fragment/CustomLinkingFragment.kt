@@ -16,9 +16,6 @@ import com.launchkey.android.authenticator.sdk.DeviceLinkedEventCallback
 import com.launchkey.android.authenticator.sdk.device.Device
 import com.launchkey.android.authenticator.sdk.error.BaseError
 
-/**
- * Created by armando on 7/8/16.
- */
 class CustomLinkingFragment : BaseDemoFragment() {
 
     private var mCode: EditText? = null
@@ -74,12 +71,12 @@ class CustomLinkingFragment : BaseDemoFragment() {
 
     override fun onResume() {
         super.onResume()
-        mAuthenticatorManager!!.registerForEvents<DeviceLinkedEventCallback>(mOnDeviceLinked)
+        mAuthenticatorManager!!.registerForEvents(mOnDeviceLinked)
     }
 
     override fun onPause() {
         super.onPause()
-        mAuthenticatorManager!!.unregisterForEvents<DeviceLinkedEventCallback>(mOnDeviceLinked)
+        mAuthenticatorManager!!.unregisterForEvents(mOnDeviceLinked)
     }
 
     private fun onLink() {

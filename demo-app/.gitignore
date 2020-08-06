@@ -16,8 +16,8 @@ gen/
 .gradle/
 build/
 **/build/
-**/javaApp
-**/kotlinApp
+**/app/javaApp
+**/app/kotlinApp
 
 # Local configuration file (sdk path, etc)
 local.properties

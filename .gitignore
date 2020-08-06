@@ -36,3 +36,9 @@ app/app.iml
 google-services.json
 whitelabel.xml
 authenticator.xml
+
+**/.idea/
+**/*.iml
+**/google-services.json
+**/authenticator.xml
+**/external

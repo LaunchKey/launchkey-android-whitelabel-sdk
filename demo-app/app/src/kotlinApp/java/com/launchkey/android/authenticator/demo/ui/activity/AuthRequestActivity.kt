@@ -19,9 +19,6 @@ import com.launchkey.android.authenticator.sdk.auth.event.GetAuthRequestEventCal
 import com.launchkey.android.authenticator.sdk.error.BaseError
 import com.launchkey.android.authenticator.sdk.error.DeviceNotLinkedError
 
-/**
- * Created by armando on 8/9/16.
- */
 class AuthRequestActivity : BaseDemoActivity() {
 
     private var mOnUnlink: DeviceUnlinkedEventCallback? = null

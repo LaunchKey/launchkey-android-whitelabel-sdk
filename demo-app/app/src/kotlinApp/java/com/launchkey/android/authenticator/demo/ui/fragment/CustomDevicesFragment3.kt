@@ -16,9 +16,6 @@ import com.launchkey.android.authenticator.sdk.device.event.GetDevicesEventCallb
 import com.launchkey.android.authenticator.sdk.error.BaseError
 import java.util.*
 
-/**
- * Created by armando on 7/8/16.
- */
 class CustomDevicesFragment3 : BaseDemoFragment(), AdapterView.OnItemClickListener {
 
     private val mDevices = ArrayList<Device>()
@@ -63,13 +60,13 @@ class CustomDevicesFragment3 : BaseDemoFragment(), AdapterView.OnItemClickListen
 
     override fun onResume() {
         super.onResume()
-        mDeviceManager!!.registerForEvents<GetDevicesEventCallback>(mGetDevicesCallback)
+        mDeviceManager!!.registerForEvents(mGetDevicesCallback)
         mDeviceManager!!.getDevices()
     }
 
     override fun onPause() {
         super.onPause()
-        mDeviceManager!!.unregisterForEvents<GetDevicesEventCallback>(mGetDevicesCallback)
+        mDeviceManager!!.unregisterForEvents(mGetDevicesCallback)
     }
 
     override fun onItemClick(parent: AdapterView<*>, view: View, position: Int, id: Long) {

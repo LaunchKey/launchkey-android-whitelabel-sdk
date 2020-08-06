@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/demo_backgrounds"
     >
 
     <android.support.v7.widget.Toolbar
@@ -11,11 +11,10 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/demo_toolbar_height"
         android:layout_alignParentTop="true"
-        android:minHeight="@dimen/demo_toolbar_height"
         android:background="?attr/colorPrimary"
-        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:minHeight="@dimen/demo_toolbar_height"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        />
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <fragment
         android:id="@+id/demo_activity_authrequest_fragment"
@@ -24,19 +23,19 @@
         android:layout_height="0dp"
         android:layout_below="@id/demo_activity_authrequest_toolbar"
         android:layout_alignParentBottom="true"
-        />
+        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+    />
 
     <TextView
         android:id="@+id/demo_activity_authrequest_norequest"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_alignTop="@id/demo_activity_authrequest_fragment"
-        android:layout_alignBottom="@id/demo_activity_authrequest_fragment"
-        android:text="@string/demo_activity_authrequest_norequests_message"
-        android:textColor="@android:color/secondary_text_dark"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:gravity="center"
-        android:visibility="gone"
-        tools:visibility="visible"
-        />
+        android:text="@string/demo_activity_authrequest_norequests_message"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="@android:color/secondary_text_dark" />
+
 </RelativeLayout>

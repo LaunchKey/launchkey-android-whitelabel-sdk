@@ -1,10 +1,10 @@
 package com.launchkey.android.authenticator.demo.ui.activity;
 
-import android.content.DialogInterface;
-import android.os.Build;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,83 +14,74 @@ import android.widget.Toast;
 
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.util.Utils;
-import com.launchkey.android.authenticator.sdk.DeviceUnlinkedEventCallback;
 import com.launchkey.android.authenticator.sdk.auth.AuthRequest;
-import com.launchkey.android.authenticator.sdk.auth.AuthRequestManager;
 import com.launchkey.android.authenticator.sdk.auth.event.AuthRequestResponseEventCallback;
 import com.launchkey.android.authenticator.sdk.auth.event.GetAuthRequestEventCallback;
+import com.launchkey.android.authenticator.sdk.auth.AuthRequestManager;
 import com.launchkey.android.authenticator.sdk.error.BaseError;
 import com.launchkey.android.authenticator.sdk.error.DeviceNotLinkedError;
+import com.launchkey.android.authenticator.sdk.ui.AuthRequestFragment;
 
-/**
- * Created by armando on 8/9/16.
- */
-public class AuthRequestActivity extends BaseDemoActivity {
-
-    private DeviceUnlinkedEventCallback mOnUnlink;
-    private AuthRequestManager mAuthRequestManager;
-    private GetAuthRequestEventCallback mOnRequest;
-    private AuthRequestResponseEventCallback mOnResponse;
-
+public class AuthRequestActivity extends BaseDemoActivity implements AuthRequestFragment.Listener {
+    private final String EXTRA_REQUEST_VISIBILITY = "is_request_shown";
+    private final AuthRequestManager authRequestManager = AuthRequestManager.getInstance();
     private TextView mNoRequestsView;
-    private Toolbar mToolbar;
+    private boolean mRequestShown = false;
+    private final @NonNull GetAuthRequestEventCallback mOnRequest = new GetAuthRequestEventCallback() {
+        @Override
+        public void onEventResult(boolean successful, BaseError error, AuthRequest authRequest) {
+            NotificationManager notificationManager =
+                    (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null) {
+                notificationManager.cancelAll();
+            }
+
+            updateNoRequestsView(false);
+
+            if (!successful) {
+                handleError(error);
+            }
+        }
+    };
+    private final @NonNull AuthRequestResponseEventCallback mOnResponse = new AuthRequestResponseEventCallback() {
+        @Override
+        public void onEventResult(boolean successful, BaseError error, Boolean authorized) {
+            if (successful) {
+                updateNoRequestsView(false);
+            } else {
+                handleError(error);
+            }
+        }
+    };
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(final @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.demo_activity_authrequest);
+        mNoRequestsView = findViewById(R.id.demo_activity_authrequest_norequest);
+        mNoRequestsView.setVisibility(mRequestShown ? View.GONE : View.VISIBLE);
 
-        mToolbar = findViewById(R.id.demo_activity_authrequest_toolbar);
+        Toolbar mToolbar = findViewById(R.id.demo_activity_authrequest_toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setTitle("Request");
 
-        mNoRequestsView = findViewById(R.id.demo_activity_authrequest_norequest);
-        
-        mOnUnlink = new DeviceUnlinkedEventCallback() {
-            @Override
-            public void onEventResult(boolean ok, BaseError e, Object o) {
-
-                finish();
-            }
-        };
-
-        mAuthRequestManager = AuthRequestManager.getInstance(this);
-
-        mOnRequest = new GetAuthRequestEventCallback() {
-
-            @Override
-            public void onEventResult(boolean successful, BaseError error, AuthRequest authRequest) {
-
-                updateNoRequestsView(false);
-
-                if (!successful) {
-                    //let the callback handle the error
-                    mOnResponse.onEventResult(false, error, null);
-                }
-            }
-        };
-
-        mOnResponse = new AuthRequestResponseEventCallback() {
-            @Override
-            public void onEventResult(boolean successful, BaseError error, Boolean authorized) {
-
-                if (successful) {
-                    mOnRequest.onEventResult(true, null, null);
-                } else {
-                    if (error instanceof DeviceNotLinkedError) {
-                        showUnlinkedDialog();
-                    } else {
-                        //this will potentially cover ExpiredAuthRequestError most of the time
-                        Toast.makeText(AuthRequestActivity.this, Utils.getMessageForBaseError(error),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                finishIfNecessary();
-            }
-        };
 
         updateNoRequestsView(false);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(final @NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        int isRequestShown = savedInstanceState.getInt(EXTRA_REQUEST_VISIBILITY, View.VISIBLE);
+        onUiChange(isRequestShown != View.VISIBLE);
+    }
+
+    private void handleError(final @NonNull BaseError error) {
+        if (!(error instanceof DeviceNotLinkedError)) {
+            //this will potentially cover ExpiredAuthRequestError most of the time
+            Toast.makeText(AuthRequestActivity.this, Utils.getMessageForBaseError(error),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -101,11 +92,13 @@ public class AuthRequestActivity extends BaseDemoActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch (item.getItemId()) {
-            case R.id.menu_refresh:
+        if (item.getItemId() == R.id.menu_refresh) {
+            if (getAuthenticatorManager().isDeviceLinked()) {
                 onRefresh();
-                return true;
+            } else {
+                finish();
+            }
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -114,21 +107,18 @@ public class AuthRequestActivity extends BaseDemoActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mAuthRequestManager.registerForEvents(mOnRequest, mOnResponse);
-        getAuthenticatorManager().registerForEvents(mOnUnlink);
+        authRequestManager.registerForEvents(mOnRequest, mOnResponse);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mAuthRequestManager.unregisterForEvents(mOnRequest, mOnResponse);
-        getAuthenticatorManager().unregisterForEvents(mOnUnlink);
+        authRequestManager.unregisterForEvents(mOnRequest, mOnResponse);
     }
 
     @Override
     public void onBackPressed() {
-
-        if (hasPending()) {
+        if (authRequestManager.hasPending()) {
             return;
         }
 
@@ -137,52 +127,26 @@ public class AuthRequestActivity extends BaseDemoActivity {
 
     private void onRefresh() {
         updateNoRequestsView(true);
-        mAuthRequestManager.check();
+        authRequestManager.check();
     }
 
     private void updateNoRequestsView(boolean isChecking) {
-
         int messageRes = isChecking ? R.string.demo_activity_authrequest_refreshing_message
                 : R.string.demo_activity_authrequest_norequests_message;
         mNoRequestsView.setText(messageRes);
-
-        mNoRequestsView.setVisibility(hasPending() ? View.GONE : View.VISIBLE);
     }
 
-    private void finishIfNecessary() {
-
-        if (!hasPending()) {
-
-            finish();
-        }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(EXTRA_REQUEST_VISIBILITY, mNoRequestsView.getVisibility());
+        super.onSaveInstanceState(outState);
     }
 
-    private boolean hasPending() {
-        return mAuthRequestManager.getPendingAuthRequest() != null;
-    }
-
-    private void showUnlinkedDialog() {
-
-        DialogInterface.OnClickListener positiveClick = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        };
-
-        AlertDialog alertDialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.demo_activity_authrequest_dialog_unlinked_title)
-                .setMessage(R.string.demo_activity_authrequest_dialog_unlinked_message)
-                .setPositiveButton(R.string.demo_generic_ok, positiveClick)
-                .create();
-
-        alertDialog.show();
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            TextView messageView = alertDialog.findViewById(android.R.id.message);
-            if (messageView != null) {
-                messageView.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
-            }
+    @Override
+    public void onUiChange(boolean requestShown) {
+        mRequestShown = requestShown;
+        if (mNoRequestsView != null) {
+            mNoRequestsView.setVisibility(requestShown ? View.GONE : View.VISIBLE);
         }
     }
 }

@@ -9,9 +9,6 @@ import com.launchkey.android.authenticator.sdk.SimpleOperationCallback
 import com.launchkey.android.authenticator.sdk.error.BaseError
 import com.launchkey.android.authenticator.sdk.error.CommunicationError
 
-/**
- * Created by armando on 7/20/16.
- */
 class CustomUnlinkFragment : BaseDemoFragment() {
 
     private var mUnlinkingDialog: ProgressDialog? = null

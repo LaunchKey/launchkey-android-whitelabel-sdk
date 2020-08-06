@@ -10,9 +10,6 @@ import com.launchkey.android.authenticator.sdk.SimpleOperationCallback;
 import com.launchkey.android.authenticator.sdk.error.BaseError;
 import com.launchkey.android.authenticator.sdk.session.SessionManager;
 
-/**
- * Created by armando on 7/20/16.
- */
 public class CustomLogoutFragment2 extends BaseDemoFragment {
 
     private ProgressDialog mLogoutDialog;
@@ -34,7 +31,7 @@ public class CustomLogoutFragment2 extends BaseDemoFragment {
         Utils.show(mLogoutDialog);
 
         SessionManager
-                .getInstance(getActivity())
+                .getInstance()
                 .endAllSessions(new SimpleOperationCallback() {
 
                     @Override
