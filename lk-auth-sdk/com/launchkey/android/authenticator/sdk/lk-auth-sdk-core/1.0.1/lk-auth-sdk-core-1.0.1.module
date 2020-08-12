@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.launchkey.android.authenticator.sdk",
+    "module": "lk-auth-sdk-core",
+    "version": "1.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.1.1",
+      "buildId": "kuq2vmxpdffk5iuhlshrhyoyam"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "lk-auth-sdk-core-1.0.1.aar",
+          "url": "lk-auth-sdk-core-1.0.1.aar",
+          "size": 521654,
+          "sha512": "d8a0ccfcb0ca13704ea183aac680b87a2ed0cfb7fd12d3bc15114155af1143270c14ab5ac4cbd2f8782a5bfc243488f09b649c0ae1fe434ec9b7c82d4dfeabf6",
+          "sha256": "814e400978c1cbd8555d5c325150d4255cc98493c18923d114412d0b5f00b903",
+          "sha1": "7dcc030d9d7d1566e0f048079a2d80fe6c8bc108",
+          "md5": "8f60966f7e1845c77f2e0922ff768412"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.support",
+          "module": "support-v4",
+          "version": {
+            "requires": "23.4.0"
+          }
+        },
+        {
+          "group": "com.android.support",
+          "module": "appcompat-v7",
+          "version": {
+            "requires": "23.4.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-base",
+          "version": {
+            "requires": "8.3.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-location",
+          "version": {
+            "requires": "8.3.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-wearable",
+          "version": {
+            "requires": "8.3.0"
+          }
+        },
+        {
+          "group": "org.bitbucket.b_c",
+          "module": "jose4j",
+          "version": {
+            "requires": "0.4.4"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "3.3.1"
+          }
+        },
+        {
+          "group": "com.madgag.spongycastle",
+          "module": "core",
+          "version": {
+            "requires": "1.58.0.0"
+          }
+        },
+        {
+          "group": "com.madgag.spongycastle",
+          "module": "prov",
+          "version": {
+            "requires": "1.58.0.0"
+          }
+        },
+        {
+          "group": "com.madgag.spongycastle",
+          "module": "bcpkix-jdk15on",
+          "version": {
+            "requires": "1.58.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "lk-auth-sdk-core-1.0.1.aar",
+          "url": "lk-auth-sdk-core-1.0.1.aar",
+          "size": 521654,
+          "sha512": "d8a0ccfcb0ca13704ea183aac680b87a2ed0cfb7fd12d3bc15114155af1143270c14ab5ac4cbd2f8782a5bfc243488f09b649c0ae1fe434ec9b7c82d4dfeabf6",
+          "sha256": "814e400978c1cbd8555d5c325150d4255cc98493c18923d114412d0b5f00b903",
+          "sha1": "7dcc030d9d7d1566e0f048079a2d80fe6c8bc108",
+          "md5": "8f60966f7e1845c77f2e0922ff768412"
+        }
+      ]
+    }
+  ]
+}

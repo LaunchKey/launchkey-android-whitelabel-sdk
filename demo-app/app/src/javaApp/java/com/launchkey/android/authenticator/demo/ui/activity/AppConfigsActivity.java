@@ -118,8 +118,41 @@ public class AppConfigsActivity extends BaseDemoActivity {
         mAllowChangesWhenUnlinked.setChecked(config.areSecurityChangesAllowedWhenUnlinked());
 
         try {
-            final String subdomain = getString(R.string.lk_auth_sdk_oendsub);
-            final String domain = getString(R.string.lk_auth_sdk_oenddom);
+            // If overriding domain or subdomain is null, default values will be used when specs are built
+            final Resources res = getResources();
+            final int subdomainOverrideResId =
+                    res.getIdentifier("lk_auth_sdk_oendsub", "string", getPackageName());
+
+            final String subdomainOverride;
+            if (subdomainOverrideResId > 0) {
+                subdomainOverride = res.getString(subdomainOverrideResId);
+            } else {
+                subdomainOverride = null;
+            }
+
+            final String subdomain;
+            if (subdomainOverride == null) {
+                subdomain = "mapi";
+            } else {
+                subdomain = subdomainOverride;
+            }
+
+            final int domainOverrideResId =
+                    res.getIdentifier("lk_auth_sdk_oenddom", "string", getPackageName());
+
+            final String domainOverride;
+            if (domainOverrideResId > 0) {
+                domainOverride = res.getString(domainOverrideResId);
+            } else {
+                domainOverride = null;
+            }
+
+            final String domain;
+            if (domainOverride == null) {
+                domain = "launchkey.com";
+            } else {
+                domain = domainOverride;
+            }
             final String endpoint = getString(
                     R.string.demo_activity_list_feature_config_endpoint_format, subdomain, domain);
             mEndpoint.setText(endpoint);
