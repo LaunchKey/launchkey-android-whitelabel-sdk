@@ -1,0 +1,117 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.launchkey.android.authenticator.sdk",
+    "module": "lk-auth-sdk",
+    "version": "4.10.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.1.1",
+      "buildId": "e4z775pdtbgfzpickq4wq2q73a"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "lk-auth-sdk-4.10.1.aar",
+          "url": "lk-auth-sdk-4.10.1.aar",
+          "size": 3753371,
+          "sha512": "039dfa097e8c50985f985151f0f1ffd6e76fc10126378b0c29130bc1cc9f55bde6d4bc67aae5aa31d86f0c5657b8f5d2d7052336321cb2c8d6ea8dfb46d0a960",
+          "sha256": "12777e30d39e3a2a7941aaa0ad1c8717464c804c3371ed31694474034c9ba9e9",
+          "sha1": "c222c5fdd9b19d79e4e850313118978e5a418da9",
+          "md5": "57abfba61fc00fa793adb455ddb84ad9"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.support",
+          "module": "support-v4",
+          "version": {
+            "requires": "24.0.0"
+          }
+        },
+        {
+          "group": "com.android.support",
+          "module": "appcompat-v7",
+          "version": {
+            "requires": "24.0.0"
+          }
+        },
+        {
+          "group": "com.android.support",
+          "module": "design",
+          "version": {
+            "requires": "24.0.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-base",
+          "version": {
+            "requires": "8.3.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-location",
+          "version": {
+            "requires": "8.3.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-wearable",
+          "version": {
+            "requires": "8.3.0"
+          }
+        },
+        {
+          "group": "com.squareup.picasso",
+          "module": "picasso",
+          "version": {
+            "requires": "2.5.2"
+          }
+        },
+        {
+          "group": "com.launchkey.android.authenticator.sdk",
+          "module": "lk-auth-sdk-core",
+          "version": {
+            "requires": "1.0.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "lk-auth-sdk-4.10.1.aar",
+          "url": "lk-auth-sdk-4.10.1.aar",
+          "size": 3753371,
+          "sha512": "039dfa097e8c50985f985151f0f1ffd6e76fc10126378b0c29130bc1cc9f55bde6d4bc67aae5aa31d86f0c5657b8f5d2d7052336321cb2c8d6ea8dfb46d0a960",
+          "sha256": "12777e30d39e3a2a7941aaa0ad1c8717464c804c3371ed31694474034c9ba9e9",
+          "sha1": "c222c5fdd9b19d79e4e850313118978e5a418da9",
+          "md5": "57abfba61fc00fa793adb455ddb84ad9"
+        }
+      ]
+    }
+  ]
+}
