@@ -3,8 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.launchkey.android.authenticator.demo">
 
-    <!-- TODO: FF uses API 16, remove this when LK SDK's min SDK is updated -->
-    <uses-sdk tools:overrideLibrary="com.getpebble.android.kit, com.iovation.deviceprint.lib.DevicePrint"/>
+    <uses-sdk tools:overrideLibrary="com.getpebble.android.kit"/>
 
     <!-- Required package-specific permissions by Google Maps for Android -->
     <permission

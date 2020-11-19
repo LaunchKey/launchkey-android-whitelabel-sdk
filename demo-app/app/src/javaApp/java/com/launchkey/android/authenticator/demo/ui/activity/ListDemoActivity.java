@@ -2,37 +2,35 @@ package com.launchkey.android.authenticator.demo.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+
+import com.google.android.material.snackbar.Snackbar;
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.demo.app.DemoApplication;
+import com.launchkey.android.authenticator.demo.databinding.DemoActivityListBinding;
 import com.launchkey.android.authenticator.demo.ui.adapter.DemoFeatureAdapter;
-import com.launchkey.android.authenticator.demo.ui.fragment.CustomDevicesFragment3;
+import com.launchkey.android.authenticator.demo.ui.fragment.CustomDevicesFragment;
 import com.launchkey.android.authenticator.demo.ui.fragment.CustomLinkingFragment;
-import com.launchkey.android.authenticator.demo.ui.fragment.CustomLogoutFragment2;
+import com.launchkey.android.authenticator.demo.ui.fragment.CustomLogoutFragment;
 import com.launchkey.android.authenticator.demo.ui.fragment.CustomSessionsFragment;
-import com.launchkey.android.authenticator.demo.ui.fragment.CustomUnlinkFragment2;
+import com.launchkey.android.authenticator.demo.ui.fragment.CustomUnlinkFragment;
 import com.launchkey.android.authenticator.demo.ui.fragment.SecurityInfoFragment;
-import com.launchkey.android.authenticator.sdk.AuthenticatorManager;
-import com.launchkey.android.authenticator.sdk.DeviceLinkedEventCallback;
-import com.launchkey.android.authenticator.sdk.DeviceUnlinkedEventCallback;
-import com.launchkey.android.authenticator.sdk.device.Device;
-import com.launchkey.android.authenticator.sdk.device.DeviceManager;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.DeviceLinkedEventCallback;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback;
+import com.launchkey.android.authenticator.sdk.ui.AuthenticatorUIManager;
 import com.launchkey.android.authenticator.sdk.ui.fragment.DevicesFragment;
 import com.launchkey.android.authenticator.sdk.ui.fragment.SessionsFragment;
 
 import java.util.Locale;
 
-public class ListDemoActivity extends BaseDemoActivity implements AdapterView.OnItemClickListener {
+public class ListDemoActivity extends BaseDemoActivity<DemoActivityListBinding> implements AdapterView.OnItemClickListener {
 
+    public static final String EXTRA_SDK_KEY = "extraSdkKey";
     public static final String EXTRA_SHOW_REQUEST = "extraShowRequest";
 
     @StringRes private static final int ERROR_DEVICE_UNLINKED = R.string.demo_generic_device_is_unlinked;
@@ -46,56 +44,62 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
             R.string.demo_activity_list_feature_security_custom,
             R.string.demo_activity_list_feature_securityinfo,
             R.string.demo_activity_list_feature_requests_xml,
-            R.string.demo_activity_list_feature_logout_custom2,
-            R.string.demo_activity_list_feature_unlink_custom2,
+            R.string.demo_activity_list_feature_logout_custom,
+            R.string.demo_activity_list_feature_unlink_custom,
             R.string.demo_activity_list_feature_sessions_default,
             R.string.demo_activity_list_feature_sessions_custom,
             R.string.demo_activity_list_feature_devices_default,
-            R.string.demo_activity_list_feature_devices_custom3,
+            R.string.demo_activity_list_feature_devices_custom,
             R.string.demo_activity_list_feature_config
     };
 
-    private ListView mList;
     private DemoFeatureAdapter mAdapter;
-
+    private String sdkKey = null;
     private final @NonNull DeviceLinkedEventCallback mDeviceLinkedCallback = new DeviceLinkedEventCallback() {
         @Override
-        public void onEventResult(boolean successful, BaseError error, Device device) {
+        public void onSuccess(@NonNull final Device device) {
+            updateUi();
+        }
+
+        @Override
+        public void onFailure(final @NonNull Exception e) {
             updateUi();
         }
     };
 
-    private final @NonNull DeviceUnlinkedEventCallback mDeviceUnlinkedCallback = new DeviceUnlinkedEventCallback() {
+    private final @NonNull UnlinkDeviceEventCallback mDeviceUnlinkedCallback = new UnlinkDeviceEventCallback() {
         @Override
-        public void onEventResult(boolean successful, BaseError error, Object o) {
+        public void onSuccess(final @NonNull Device device) {
+            updateUi();
+        }
+
+        @Override
+        public void onFailure(final @NonNull Exception e) {
             updateUi();
         }
     };
+
+    public ListDemoActivity() {
+        super(R.layout.demo_activity_list);
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.demo_activity_list);
 
-        // Makes sure we only initialize the sample app once (instead of also instantiating it in
-        // DemoApplication)
-        String sdkKey = getIntent().getStringExtra("sdkKey");
-        String action = getIntent().getAction();
-        if (action != null && action.equals("android.intent.action.MAIN")) {
-            ((DemoApplication) getApplication()).initialize(sdkKey);
+        binding = DemoActivityListBinding.bind(findViewById(R.id.demo_activity_list_root));
+
+        sdkKey = getIntent().getStringExtra(ListDemoActivity.EXTRA_SDK_KEY);
+        if (sdkKey == null) {
+            sdkKey = getString(R.string.authenticator_sdk_key);
         }
 
-        final Toolbar toolbar = findViewById(R.id.list_toolbar);
-
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-        }
+        setSupportActionBar(binding.listToolbar);
 
         mAdapter = new DemoFeatureAdapter(this, FEATURES_RES);
 
-        mList = findViewById(R.id.list_listview);
-        mList.setAdapter(mAdapter);
-        mList.setOnItemClickListener(this);
+        binding.listListview.setAdapter(mAdapter);
+        binding.listListview.setOnItemClickListener(this);
 
         // Try processing Intent that could have extras from an FCM
         // notification if the app was in the background and running
@@ -115,7 +119,7 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
         }
 
         if (!extras.getString("jwe", "").isEmpty()) {
-            AuthenticatorManager.getInstance().onPushNotification(extras);
+            getAuthenticatorManager().handlePushPayload(extras);
             i.putExtra(EXTRA_SHOW_REQUEST, true);
         }
         if (i.getBooleanExtra(EXTRA_SHOW_REQUEST, false)) {
@@ -140,7 +144,7 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
 
         final String message;
         if (nowLinked) {
-            Device device = DeviceManager.getInstance().getCurrentDevice();
+            Device device = getAuthenticatorManager().instance.getCurrentDevice();
             message = String.format(Locale.getDefault(), "\"%s\"", device.getName());
         } else {
             message = getString(ERROR_DEVICE_UNLINKED);
@@ -175,7 +179,7 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
                 if (linked) {
                     showError(ERROR_DEVICE_LINKED);
                 } else {
-                    getAuthenticatorManager().startLinkingActivity(this, AuthenticatorManager.LINKING_METHOD_MANUAL);
+                    getAuthenticatorUIManager().startLinkingActivity(this, AuthenticatorUIManager.LINKING_METHOD_MANUAL, sdkKey);
                 }
 
                 break;
@@ -183,7 +187,7 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
                 if (linked) {
                     showError(ERROR_DEVICE_LINKED);
                 } else {
-                    getAuthenticatorManager().startLinkingActivity(this, AuthenticatorManager.LINKING_METHOD_SCAN);
+                    getAuthenticatorUIManager().startLinkingActivity(this, AuthenticatorUIManager.LINKING_METHOD_SCAN, sdkKey);
                 }
 
                 break;
@@ -196,7 +200,7 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
 
                 break;
             case R.string.demo_activity_list_feature_security:
-                getAuthenticatorManager().startSecurityActivity(this);
+                getAuthenticatorUIManager().startSecurityActivity(this);
                 break;
             case R.string.demo_activity_list_feature_security_custom:
                 Intent customSecurityActivity = new Intent(this, CustomSecurityActivity.class);
@@ -214,20 +218,20 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
                 }
 
                 break;
-            case R.string.demo_activity_list_feature_logout_custom2:
+            case R.string.demo_activity_list_feature_logout_custom:
                 if (!linked) {
                     showError(ERROR_DEVICE_UNLINKED);
                 } else {
-                    fragmentClassName = CustomLogoutFragment2.class;
+                    fragmentClassName = CustomLogoutFragment.class;
                     goBackOnUnlink = true;
                 }
 
                 break;
-            case R.string.demo_activity_list_feature_unlink_custom2:
+            case R.string.demo_activity_list_feature_unlink_custom:
                 if (!linked) {
                     showError(ERROR_DEVICE_UNLINKED);
                 } else {
-                    fragmentClassName = CustomUnlinkFragment2.class;
+                    fragmentClassName = CustomUnlinkFragment.class;
                     goBackOnUnlink = true;
                 }
 
@@ -259,18 +263,19 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
                 }
 
                 break;
-            case R.string.demo_activity_list_feature_devices_custom3:
+            case R.string.demo_activity_list_feature_devices_custom:
                 if (!linked) {
                     showError(ERROR_DEVICE_UNLINKED);
                 } else {
-                    fragmentClassName = CustomDevicesFragment3.class;
+                    fragmentClassName = CustomDevicesFragment.class;
                     goBackOnUnlink = true;
                 }
 
                 break;
             case R.string.demo_activity_list_feature_config:
                 Intent appConfigsActivity = new Intent(this, AppConfigsActivity.class);
-                startActivity(appConfigsActivity);
+                appConfigsActivity.putExtra(ListDemoActivity.EXTRA_SDK_KEY, sdkKey);
+                startActivityForResult(appConfigsActivity, 0);
                 break;
         }
 
@@ -287,6 +292,12 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        sdkKey = data == null ? null : data.getStringExtra(ListDemoActivity.EXTRA_SDK_KEY);
+    }
+
     private void showError(int messageRes) {
         showError(getString(messageRes));
     }
@@ -296,6 +307,6 @@ public class ListDemoActivity extends BaseDemoActivity implements AdapterView.On
     }
 
     private void showMessage(String message) {
-        Snackbar.make(mList, message, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(binding.listListview, message, Snackbar.LENGTH_LONG).show();
     }
 }

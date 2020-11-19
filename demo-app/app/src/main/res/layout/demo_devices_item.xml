@@ -9,16 +9,13 @@
         android:id="@+id/demo_devices_item_button"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:text="@string/demo_activity_list_feature_devices_custom3_unlink_button"
+        android:text="@string/demo_activity_list_feature_devices_custom_unlink_button"
         android:layout_alignParentEnd="true" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@id/demo_devices_item_button"
         android:orientation="vertical"
         android:layout_alignParentStart="true"
         android:layout_toStartOf="@id/demo_devices_item_button">
@@ -30,7 +27,7 @@
             android:textStyle="bold"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
             android:maxLines="1"
-            android:text="@string/demo_activity_list_feature_devices_custom3_current_device_label"
+            android:text="@string/demo_activity_list_feature_devices_custom_current_device_label"
             android:gravity="start"
             android:textAlignment="viewStart"
             />

@@ -2,24 +2,24 @@ package com.launchkey.android.authenticator.demo.util;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
+import com.google.android.material.snackbar.Snackbar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+
 import android.view.View;
 
-import com.launchkey.android.authenticator.sdk.error.ApiError;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
-import com.launchkey.android.authenticator.sdk.error.CommunicationError;
-import com.launchkey.android.authenticator.sdk.error.DeviceNotFoundError;
-import com.launchkey.android.authenticator.sdk.error.DeviceNotLinkedError;
-import com.launchkey.android.authenticator.sdk.error.ExpiredAuthRequestError;
-import com.launchkey.android.authenticator.sdk.error.GcmSetupError;
-import com.launchkey.android.authenticator.sdk.error.MalformedLinkingCodeError;
-import com.launchkey.android.authenticator.sdk.error.NoInternetConnectivityError;
-import com.launchkey.android.authenticator.sdk.error.NoSecurityFactorsError;
-import com.launchkey.android.authenticator.sdk.error.RequestArgumentError;
-import com.launchkey.android.authenticator.sdk.error.UnexpectedCertificateError;
-
+import com.launchkey.android.authenticator.sdk.core.exception.AuthRequestNotFoundException;
+import com.launchkey.android.authenticator.sdk.core.exception.CommunicationException;
+import com.launchkey.android.authenticator.sdk.core.exception.DeviceNameAlreadyUsedException;
+import com.launchkey.android.authenticator.sdk.core.exception.DeviceNotFoundException;
+import com.launchkey.android.authenticator.sdk.core.exception.DeviceNotLinkedException;
+import com.launchkey.android.authenticator.sdk.core.exception.IncorrectSdkKeyException;
+import com.launchkey.android.authenticator.sdk.core.exception.InvalidLinkingCodeException;
+import com.launchkey.android.authenticator.sdk.core.exception.LaunchKeyApiException;
+import com.launchkey.android.authenticator.sdk.core.exception.MalformedLinkingCodeException;
+import com.launchkey.android.authenticator.sdk.core.exception.NoInternetConnectivityException;
+import com.launchkey.android.authenticator.sdk.core.exception.RequestArgumentException;
+import com.launchkey.android.authenticator.sdk.core.exception.UnexpectedCertificateException;
 
 public final class Utils {
     public static void show(Dialog d) {
@@ -34,7 +34,7 @@ public final class Utils {
         }
     }
 
-    public static String getMessageForBaseError(BaseError e) {
+    public static String getMessageForBaseError(Exception e) {
 
         String m = "";
 
@@ -42,27 +42,23 @@ public final class Utils {
             return m;
         }
 
-        if (e instanceof NoInternetConnectivityError) {
+        if (e instanceof NoInternetConnectivityException) {
             m = "No internet connectivity--check your connection";
-        } else if (e instanceof NoSecurityFactorsError) {
-            m = "User authentication is not possible when no Security factors are set.";
-        } else if (e instanceof RequestArgumentError) {
+        } else if (e instanceof RequestArgumentException) {
             m = "Problem setting things up. Details=" + e.getMessage();
-        } else if (e instanceof CommunicationError) {
+        } else if (e instanceof CommunicationException) {
             m = "Error contacting service (" + e + ")";
-        } else if (e instanceof DeviceNotLinkedError) {
+        } else if (e instanceof DeviceNotLinkedException) {
             m = "Device is yet to be linked or it has been marked as unlinked by the service";
-        } else if (e instanceof DeviceNotFoundError) {
+        } else if (e instanceof DeviceNotFoundException) {
             m = "Could not find device to delete";
-        } else if (e instanceof MalformedLinkingCodeError) {
+        } else if (e instanceof MalformedLinkingCodeException) {
             m = "The linking code is invalid";
-        } else if (e instanceof GcmSetupError) {
-            m = "GCM (Push notifications) could not fully finish (" + e.getCode() + ")";
-        } else if (e instanceof ExpiredAuthRequestError) {
+        } else if (e instanceof AuthRequestNotFoundException) {
             m = "Auth Request has expired";
-        } else if (e instanceof ApiError) {
-            m = getMessageForApiError((ApiError) e);
-        } else if (e instanceof UnexpectedCertificateError) {
+        } else if (e instanceof LaunchKeyApiException) {
+            m = getMessageForApiError((LaunchKeyApiException) e);
+        } else if (e instanceof UnexpectedCertificateException) {
             m = "Your Internet traffic could be monitored. Make sure you are on a reliable network.";
         } else {
             m = "Unknown error=" + e.getMessage();
@@ -71,25 +67,24 @@ public final class Utils {
         return m;
     }
 
-    public static String getMessageForApiError(ApiError e) {
+    public static String getMessageForApiError(LaunchKeyApiException e) {
 
         if (e == null) {
             return null;
         }
 
-        switch (e.getCodeInt()) {
-            case ApiError.DEVICE_NAME_ALREADY_USED:
-                return "The device name you chose is already assigned to another device associated with your account.  Please choose an alternative name or unlink the conflicting device, and then try again.";
-            case ApiError.INCORRECT_SDK_KEY:
-                return "Mobile SDK key incorrect. Please check with your service provider.";
-            case ApiError.INVALID_LINKING_CODE:
-                return "Invalid linking code used.";
-            default:
-                return "Extras:\n".concat(e.getMessage());
+        if (e instanceof DeviceNameAlreadyUsedException) {
+            return "The device name you chose is already assigned to another device associated with your account.  Please choose an alternative name or unlink the conflicting device, and then try again.";
+        } else if (e instanceof IncorrectSdkKeyException) {
+            return "Mobile SDK key incorrect. Please check with your service provider.";
+        } else if (e instanceof InvalidLinkingCodeException) {
+            return "Invalid linking code used.";
+        } else {
+            return "Extras:\n".concat(e.getMessage());
         }
     }
 
-    public static void simpleSnackbarForBaseError(View v, BaseError e) {
+    public static void simpleSnackbarForBaseError(View v, Exception e) {
         if (v == null || e == null) {
             return;
         }

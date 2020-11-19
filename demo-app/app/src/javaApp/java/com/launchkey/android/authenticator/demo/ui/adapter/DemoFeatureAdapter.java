@@ -1,7 +1,8 @@
 package com.launchkey.android.authenticator.demo.ui.adapter;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +38,7 @@ public class DemoFeatureAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, @Nullable View convertView, @Nullable ViewGroup parent) {
         TextView v = (TextView) convertView;
 
         if (v == null) {

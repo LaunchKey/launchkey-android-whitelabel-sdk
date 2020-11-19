@@ -1,8 +1,9 @@
 package com.launchkey.android.authenticator.demo.ui.fragment;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,57 +11,50 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.ui.adapter.DemoSessionsAdapter;
 import com.launchkey.android.authenticator.demo.util.Utils;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
-import com.launchkey.android.authenticator.sdk.session.Session;
-import com.launchkey.android.authenticator.sdk.session.SessionManager;
-import com.launchkey.android.authenticator.sdk.session.event.EndAllSessionsEventCallback;
-import com.launchkey.android.authenticator.sdk.session.event.EndSessionEventCallback;
-import com.launchkey.android.authenticator.sdk.session.event.GetSessionsEventCallback;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Session;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.EndAllSessionsEventCallback;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.EndSessionEventCallback;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.GetSessionsEventCallback;
+import com.launchkey.android.authenticator.sdk.core.util.CompositeDisposable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CustomSessionsFragment extends BaseDemoFragment implements AdapterView.OnItemClickListener {
 
-    private final SessionManager sessionManager = SessionManager.getInstance();
+    private final @NonNull CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private final @NonNull AuthenticatorManager sessionManager = AuthenticatorManager.instance;
     private List<Session> mSessions = new ArrayList<>();
     private ListView mList;
     private final EndSessionEventCallback endSessionEventCallback = new EndSessionEventCallback() {
         @Override
-        public void onEventResult(boolean successful, BaseError error, Session session) {
-            if (successful) {
-                refresh();
-                Utils.simpleSnackbar(mList, "Session \"" + session.getName() + "\" ended");
-            } else {
-                Utils.simpleSnackbarForBaseError(mList, error);
-            }
+        public void onSuccess(final Session session) {
+            refresh();
+            Utils.simpleSnackbar(mList, "Session \"" + session.getName() + "\" ended");
         }
-    };
-    private final EndAllSessionsEventCallback endAllSessionsEventCallback = new EndAllSessionsEventCallback() {
+
         @Override
-        public void onEventResult(boolean successful, BaseError error, Object o) {
-            if (successful) {
-                refresh();
-                Utils.simpleSnackbar(mList, "All sessions ended", Snackbar.LENGTH_SHORT);
-            } else {
-                Utils.simpleSnackbarForBaseError(mList, error);
-            }
+        public void onFailure(final @NonNull Exception e) {
+            Utils.simpleSnackbarForBaseError(mList, e);
         }
     };
     private DemoSessionsAdapter adapter;
     private final GetSessionsEventCallback getSessionsEventCallback = new GetSessionsEventCallback() {
         @Override
-        public void onEventResult(boolean successful, BaseError error, List<Session> sessions) {
-            if (successful) {
-                mSessions.clear();
-                mSessions.addAll(sessions);
-                adapter.notifyDataSetChanged();
-            } else {
-                Utils.simpleSnackbarForBaseError(mList, error);
-            }
+        public void onSuccess(@NonNull List<Session> sessions) {
+            mSessions.clear();
+            mSessions.addAll(sessions);
+            adapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onFailure(@NonNull Exception e) {
+            Utils.simpleSnackbarForBaseError(mList, e);
         }
     };
 
@@ -89,7 +83,18 @@ public class CustomSessionsFragment extends BaseDemoFragment implements AdapterV
 
             @Override
             public void onClick(View v) {
-                sessionManager.endAllSessions(null);
+                sessionManager.endAllSessions(new EndAllSessionsEventCallback() {
+                    @Override
+                    public void onSuccess(final Void result) {
+                        refresh();
+                        Utils.simpleSnackbar(mList, "All sessions ended", Snackbar.LENGTH_SHORT);
+                    }
+
+                    @Override
+                    public void onFailure(final @NonNull Exception e) {
+                        Utils.simpleSnackbarForBaseError(mList, e);
+                    }
+                });
             }
         });
 
@@ -104,26 +109,19 @@ public class CustomSessionsFragment extends BaseDemoFragment implements AdapterV
             refresh();
         }
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        sessionManager.registerForEvents(getSessionsEventCallback, endSessionEventCallback, endAllSessionsEventCallback);
-    }
-
     @Override
     public void onPause() {
         super.onPause();
-        sessionManager.unregisterForEvents(getSessionsEventCallback, endSessionEventCallback, endAllSessionsEventCallback);
+        compositeDisposable.clear();
     }
 
     private void refresh() {
-        sessionManager.getSessions();
+        compositeDisposable.add(sessionManager.getSessions(getSessionsEventCallback));
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Session session = adapter.getItem(position);
-        sessionManager.endSession(session, null);
+        compositeDisposable.add(sessionManager.endSession(session, endSessionEventCallback));
     }
 }

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/demo_activity_authrequest_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/demo_backgrounds"
     >
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/demo_activity_authrequest_toolbar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/demo_toolbar_height"
@@ -16,7 +17,7 @@
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/demo_activity_authrequest_fragment"
         android:name="com.launchkey.android.authenticator.sdk.ui.AuthRequestFragment"
         android:layout_width="match_parent"

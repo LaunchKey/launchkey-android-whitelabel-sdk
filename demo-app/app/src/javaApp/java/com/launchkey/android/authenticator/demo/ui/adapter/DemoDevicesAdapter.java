@@ -1,8 +1,8 @@
 package com.launchkey.android.authenticator.demo.ui.adapter;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +12,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.sdk.device.Device;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
 
 import java.util.List;
 
@@ -57,7 +57,7 @@ public class DemoDevicesAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, @Nullable View convertView, @Nullable ViewGroup parent) {
 
         View v = convertView;
 

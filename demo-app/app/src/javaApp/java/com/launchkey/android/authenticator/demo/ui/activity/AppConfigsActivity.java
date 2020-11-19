@@ -1,63 +1,43 @@
 package com.launchkey.android.authenticator.demo.ui.activity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.Switch;
-import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.sdk.AuthenticatorConfig;
-import com.launchkey.android.authenticator.sdk.AuthenticatorManager;
-import com.launchkey.android.authenticator.sdk.SimpleOperationCallback;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
-import com.launchkey.android.authenticator.sdk.security.SecurityService;
+import com.launchkey.android.authenticator.demo.databinding.DemoActivityConfigsBinding;
+import com.launchkey.android.authenticator.sdk.core.auth_method_management.AuthMethod;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorConfig;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback;
+import com.launchkey.android.authenticator.sdk.ui.AuthenticatorUIConfig;
 
-public class AppConfigsActivity extends BaseDemoActivity {
-    private EditText mSdkKey;
-    private Switch mSslPinning;
-    private Switch mPinCode, mCircleCode, mWearables, mLocations, mFingerprintScan;
-    private EditText mDelayWearables, mDelayLocations;
-    private EditText mAuthFailure, mAutoUnlink, mAutoUnlinkWarning;
-    private Switch mAllowChangesWhenUnlinked;
-    private TextView mEndpoint;
+public class AppConfigsActivity extends BaseDemoActivity<DemoActivityConfigsBinding> {
+    private String originalSdkKey;
+    public AppConfigsActivity() {
+        super(R.layout.demo_activity_configs);
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.demo_activity_configs);
 
-        mSdkKey = findViewById(R.id.configs_sdk_key);
-        mSslPinning = findViewById(R.id.configs_ssl_pinning);
+        binding = DemoActivityConfigsBinding.bind(findViewById(R.id.configs_root));
 
-        mPinCode = findViewById(R.id.configs_pc);
-        mCircleCode = findViewById(R.id.configs_cc);
-        mWearables = findViewById(R.id.configs_w);
-        mLocations = findViewById(R.id.configs_l);
-        mFingerprintScan = findViewById(R.id.configs_fs);
-
-        mDelayWearables = findViewById(R.id.configs_delay_wearables);
-        mDelayLocations = findViewById(R.id.configs_delay_locations);
-
-        mAuthFailure = findViewById(R.id.configs_authfailure);
-        mAutoUnlink = findViewById(R.id.configs_autounlink);
-        mAutoUnlinkWarning = findViewById(R.id.configs_autounlinkwarning);
-
-        mAllowChangesWhenUnlinked = findViewById(R.id.configs_allowchangesunlinked);
-        mEndpoint = findViewById(R.id.configs_endpoint);
-
-        findViewById(R.id.configs_button).setOnClickListener(new View.OnClickListener() {
+        binding.configsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onReinitSdk();
             }
         });
 
-        ((TextView) findViewById(R.id.configs_build_hash)).setText(
+        binding.configsBuildHash.setText(
                 getString(
                         R.string.demo_commit_hash_title,
                         getString(R.string.demo_commit_hash)));
@@ -67,6 +47,11 @@ public class AppConfigsActivity extends BaseDemoActivity {
 
     @SuppressLint("SetTextI18n")
     private void updateUi() {
+        final Intent i = getIntent();
+        if (i != null) {
+            originalSdkKey = i.getStringExtra(ListDemoActivity.EXTRA_SDK_KEY);
+            binding.configsSdkKey.setText(originalSdkKey == null ? "" : originalSdkKey);
+        }
 
         // Prep all hints at runtime
 
@@ -74,48 +59,43 @@ public class AppConfigsActivity extends BaseDemoActivity {
         final int delaySecondsMax = 60 * 60 * 24;
         final String delayHints = getString(
                 R.string.demo_activity_list_feature_config_hints_format, delaySecondsMin, delaySecondsMax);
-        mDelayWearables.setHint(delayHints);
-        mDelayLocations.setHint(delayHints);
+        binding.configsDelayWearables.setHint(delayHints);
+        binding.configsDelayLocations.setHint(delayHints);
 
         final String authFailureHint = getString(
                 R.string.demo_activity_list_feature_config_hints_format,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTHFAILURE_MINIMUM,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTHFAILURE_MAXIMUM);
-        mAuthFailure.setHint(authFailureHint);
+        binding.configsAuthfailure.setHint(authFailureHint);
 
         final String autoUnlinkHint = getString(
                 R.string.demo_activity_list_feature_config_hints_format,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_MINIMUM,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_MAXIMUM);
-        mAutoUnlink.setHint(autoUnlinkHint);
+        binding.configsAutounlink.setHint(autoUnlinkHint);
 
         // For the warning, max is derived from Auto Unlink max - 1
         final String autoUnlinkWarningHint = getString(
                 R.string.demo_activity_list_feature_config_hints_format,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_WARNING_NONE,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_MAXIMUM - 1);
-        mAutoUnlinkWarning.setHint(autoUnlinkWarningHint);
+        binding.configsAutounlinkwarning.setHint(autoUnlinkWarningHint);
 
-        if (!getAuthenticatorManager().isInitialized()) {
-            return;
-        }
-
-        final AuthenticatorConfig config = AuthenticatorManager.getInstance().getConfig();
+        final AuthenticatorConfig config = getAuthenticatorManager().getConfig();
 
         // Update UI to match SDK config passed upon initialization
-        mSdkKey.setText(config.sdkKey());
-        mSslPinning.setChecked(config.isSslPinningRequired());
-        mPinCode.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_PIN));
-        mCircleCode.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_CIRCLE));
-        mWearables.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_PROXIMITY));
-        mLocations.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_GEOFENCING));
-        mFingerprintScan.setChecked(config.isMethodAllowedSimple(SecurityService.FACTOR_FINGERPRINT));
-        mDelayWearables.setText(Integer.toString(config.activationDelayProximitySeconds()));
-        mDelayLocations.setText(Integer.toString(config.activationDelayGeofencingSeconds()));
-        mAuthFailure.setText(Integer.toString(config.thresholdAuthFailure()));
-        mAutoUnlink.setText(Integer.toString(config.thresholdAutoUnlink()));
-        mAutoUnlinkWarning.setText(Integer.toString(config.thresholdAutoUnlinkWarning()));
-        mAllowChangesWhenUnlinked.setChecked(config.areSecurityChangesAllowedWhenUnlinked());
+
+        binding.configsPc.setChecked(config.isMethodAllowed(AuthMethod.PIN_CODE));
+        binding.configsCc.setChecked(config.isMethodAllowed(AuthMethod.CIRCLE_CODE));
+        binding.configsW.setChecked(config.isMethodAllowed(AuthMethod.WEARABLES));
+        binding.configsL.setChecked(config.isMethodAllowed(AuthMethod.LOCATIONS));
+        binding.configsFs.setChecked(config.isMethodAllowed(AuthMethod.BIOMETRIC));
+        binding.configsDelayWearables.setText(Integer.toString(config.activationDelayWearablesSeconds()));
+        binding.configsDelayLocations.setText(Integer.toString(config.activationDelayLocationsSeconds()));
+        binding.configsAuthfailure.setText(Integer.toString(config.thresholdAuthFailure()));
+        binding.configsAutounlink.setText(Integer.toString(config.thresholdAutoUnlink()));
+        binding.configsAutounlinkwarning.setText(Integer.toString(config.thresholdAutoUnlinkWarning()));
+        binding.configsAllowchangesunlinked.setChecked(getAuthenticatorUIManager().getConfig().areSecurityChangesAllowedWhenUnlinked());
 
         try {
             // If overriding domain or subdomain is null, default values will be used when specs are built
@@ -155,8 +135,8 @@ public class AppConfigsActivity extends BaseDemoActivity {
             }
             final String endpoint = getString(
                     R.string.demo_activity_list_feature_config_endpoint_format, subdomain, domain);
-            mEndpoint.setText(endpoint);
-            mEndpoint.setVisibility(View.VISIBLE);
+            binding.configsEndpoint.setText(endpoint);
+            binding.configsEndpoint.setVisibility(View.VISIBLE);
         } catch (Resources.NotFoundException e) {
             // Do nothing
         }
@@ -164,21 +144,21 @@ public class AppConfigsActivity extends BaseDemoActivity {
 
     private void onReinitSdk() {
         // Reinitialize the SDK with whichever key we had last
-        final String key = mSdkKey.getText().toString();
+        final String key = binding.configsSdkKey.getText().toString();
 
         if (key.trim().isEmpty()) {
             showError("Key cannot be null or empty.");
             return;
         }
 
-        final boolean sslPinningEnabled = mSslPinning.isChecked();
-        final boolean allowPinCode = mPinCode.isChecked();
-        final boolean allowCircleCode = mCircleCode.isChecked();
-        final boolean allowWearables = mWearables.isChecked();
-        final boolean allowLocations = mLocations.isChecked();
-        final boolean allowFingerprintScan = mFingerprintScan.isChecked();
-        final String delayWearablesStr = mDelayWearables.getText().toString();
+        final boolean sslPinningEnabled = binding.configsSslPinning.isChecked();
+        final boolean allowPinCode = binding.configsPc.isChecked();
+        final boolean allowCircleCode = binding.configsCc.isChecked();
+        final boolean allowWearables = binding.configsW.isChecked();
+        final boolean allowLocations = binding.configsL.isChecked();
+        final boolean allowFingerprintScan = binding.configsFs.isChecked();
 
+        final String delayWearablesStr = binding.configsDelayWearables.getText().toString();
         if (delayWearablesStr.trim().isEmpty()) {
             showError("Activation delay for Wearables cannot be empty");
             return;
@@ -192,8 +172,7 @@ public class AppConfigsActivity extends BaseDemoActivity {
             return;
         }
 
-        final String delayLocationsStr = mDelayLocations.getText().toString();
-
+        final String delayLocationsStr = binding.configsDelayLocations.getText().toString();
         if (delayLocationsStr.trim().isEmpty()) {
             showError("Activation delay for Locations cannot be empty");
             return;
@@ -207,7 +186,7 @@ public class AppConfigsActivity extends BaseDemoActivity {
             return;
         }
 
-        final String authFailureStr = mAuthFailure.getText().toString();
+        final String authFailureStr = binding.configsAuthfailure.getText().toString();
 
         if (authFailureStr.trim().isEmpty()) {
             showError("Auth Failure threshold cannot be empty");
@@ -222,7 +201,7 @@ public class AppConfigsActivity extends BaseDemoActivity {
             return;
         }
 
-        final String autoUnlinkStr = mAutoUnlink.getText().toString();
+        final String autoUnlinkStr = binding.configsAutounlink.getText().toString();
 
         if (autoUnlinkStr.trim().isEmpty()) {
             showError("Auto Unlink threshold cannot be empty");
@@ -237,7 +216,7 @@ public class AppConfigsActivity extends BaseDemoActivity {
             return;
         }
 
-        final String autoUnlinkWarningStr = mAutoUnlinkWarning.getText().toString();
+        final String autoUnlinkWarningStr = binding.configsAutounlinkwarning.getText().toString();
 
         if (autoUnlinkWarningStr.trim().isEmpty()) {
             showError("Auto Unlink warning threshold cannot be empty");
@@ -252,28 +231,33 @@ public class AppConfigsActivity extends BaseDemoActivity {
             return;
         }
 
-        final boolean allowChangesWhenUnlinked = mAllowChangesWhenUnlinked.isChecked();
+        final boolean allowChangesWhenUnlinked = binding.configsAllowchangesunlinked.isChecked();
 
         // Let Authenticator SDK validate threshold arguments
 
         final AuthenticatorConfig config;
-
+        final AuthenticatorUIConfig uiConfig;
         try {
-            config = new AuthenticatorConfig.Builder(this, key)
-                    .allowAuthMethod(SecurityService.FACTOR_PIN, allowPinCode)
-                    .allowAuthMethod(SecurityService.FACTOR_CIRCLE, allowCircleCode)
-                    .allowAuthMethod(SecurityService.FACTOR_PROXIMITY, allowWearables)
-                    .allowAuthMethod(SecurityService.FACTOR_GEOFENCING, allowLocations)
-                    .allowAuthMethod(SecurityService.FACTOR_FINGERPRINT, allowFingerprintScan)
-                    .activationDelayProximity(delayWearables)
-                    .activationDelayGeofencing(delayLocations)
+            AuthenticatorConfig.Builder builder = new AuthenticatorConfig.Builder();
+            disallowAuthMethod(builder, AuthMethod.PIN_CODE, allowPinCode);
+            disallowAuthMethod(builder, AuthMethod.CIRCLE_CODE, allowCircleCode);
+            disallowAuthMethod(builder, AuthMethod.WEARABLES, allowWearables);
+            disallowAuthMethod(builder, AuthMethod.LOCATIONS, allowLocations);
+            disallowAuthMethod(builder, AuthMethod.BIOMETRIC, allowFingerprintScan);
+            config = builder
+                    .activationDelayWearable(delayWearables)
+                    .activationDelayLocation(delayLocations)
                     .thresholdAuthFailure(authFailure)
-                    .thresholdAutoUnlink(autoUnlink, autoUnlinkWarning)
-                    .allowSecurityChangesWhenUnlinked(allowChangesWhenUnlinked)
+                    .thresholdAutoUnlink(autoUnlink)
+                    .thresholdAutoUnlinkWarning(autoUnlinkWarning)
                     .keyPairSize(AuthenticatorConfig.Builder.KEYSIZE_MINIMUM)
                     .sslPinning(sslPinningEnabled)
-                    .theme(R.style.DemoAppTheme)
                     .build();
+
+            uiConfig = new AuthenticatorUIConfig.Builder()
+                    .allowSecurityChangesWhenUnlinked(allowChangesWhenUnlinked)
+                    .theme(R.style.DemoAppTheme)
+                    .build(this);
         } catch (IllegalArgumentException e) {
             showError(e.getMessage());
             return;
@@ -281,16 +265,48 @@ public class AppConfigsActivity extends BaseDemoActivity {
 
         if (getAuthenticatorManager().isDeviceLinked()) {
             // Force-unlink to clear any data before re-initializing
-            getAuthenticatorManager().unlinkCurrentDevice(new SimpleOperationCallback() {
+            getAuthenticatorManager().unlinkDevice(null, new UnlinkDeviceEventCallback() {
                 @Override
-                public void onResult(boolean successful, BaseError error, Object extra) {
+                public void onSuccess(final @NonNull Device device) {
                     getAuthenticatorManager().initialize(config);
+                    getAuthenticatorUIManager().initialize(uiConfig);
+                    final Intent i = new Intent();
+                    i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, key);
+                    setResult(0, i);
+                    finish();
+                }
+
+                @Override
+                public void onFailure(final @NonNull Exception e) {
+                    getAuthenticatorManager().initialize(config);
+                    getAuthenticatorUIManager().initialize(uiConfig);
+                    final Intent i = new Intent();
+                    i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, key);
+                    setResult(0, i);
                     finish();
                 }
             });
         } else {
             getAuthenticatorManager().initialize(config);
+            getAuthenticatorUIManager().initialize(uiConfig);
+            final Intent i = new Intent();
+            i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, key);
+            setResult(0, i);
             finish();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        final Intent i = new Intent();
+        i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, originalSdkKey);
+        setResult(0, i);
+        super.onBackPressed();
+    }
+
+    private static void disallowAuthMethod(final @NonNull AuthenticatorConfig.Builder configBuilder, final @NonNull AuthMethod authMethod, final boolean allow) {
+        if (!allow) {
+            configBuilder.disallowAuthMethod(authMethod);
         }
     }
 

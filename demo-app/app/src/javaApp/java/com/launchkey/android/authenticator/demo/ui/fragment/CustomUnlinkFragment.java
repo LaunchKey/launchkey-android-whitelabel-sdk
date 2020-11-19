@@ -2,55 +2,54 @@ package com.launchkey.android.authenticator.demo.ui.fragment;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.util.Utils;
-import com.launchkey.android.authenticator.sdk.SimpleOperationCallback;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
-import com.launchkey.android.authenticator.sdk.error.CommunicationError;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback;
 
 public class CustomUnlinkFragment extends BaseDemoFragment {
+    @NonNull
+    private final AuthenticatorManager authenticatorManager = AuthenticatorManager.instance;
 
-    private ProgressDialog mUnlinkingDialog;
+    private ProgressDialog unlinkingDialog;
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mUnlinkingDialog = new ProgressDialog(getActivity(), R.style.Theme_WhiteLabel_Dialog);
-        mUnlinkingDialog.setIndeterminate(true);
-        mUnlinkingDialog.setCancelable(false);
-        mUnlinkingDialog.setMessage("Custom Unlinking...");
+        unlinkingDialog = new ProgressDialog(getActivity(), R.style.Theme_WhiteLabel_Dialog);
+        unlinkingDialog.setIndeterminate(true);
+        unlinkingDialog.setCancelable(false);
+        unlinkingDialog.setMessage("Custom Unlinking...");
 
         unlink();
     }
 
     private void unlink() {
 
-        Utils.show(mUnlinkingDialog);
+        Utils.show(unlinkingDialog);
 
-        getAuthenticatorManager().unlinkCurrentDevice(new SimpleOperationCallback() {
+        authenticatorManager.unlinkDevice(null, new UnlinkDeviceEventCallback() {
 
             @Override
-            public void onResult(boolean successful, BaseError error, Object o) {
+            public void onSuccess(@NonNull Device device) {
+                Utils.dismiss(unlinkingDialog);
 
-                Utils.dismiss(mUnlinkingDialog);
-
-                if (successful) {
-                    if (getActivity() != null && !getActivity().isFinishing()) {
-                        getActivity().finish();
-                    }
-                } else {
-                    String httpCode = error instanceof CommunicationError
-                            ? String.format("(%s)", error.getCode()) : "";
-
-                    String message = error == null
-                            ? "Null error"
-                            : String.format("Error %s obj=%s message=%s",
-                            httpCode, error.getClass().getSimpleName(), error.getMessage());
-                    Utils.alert(getActivity(), "Problem Unlinking", message);
+                if (getActivity() != null && !getActivity().isFinishing()) {
+                    getActivity().finish();
                 }
+            }
+
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Utils.dismiss(unlinkingDialog);
+                String message = e.getMessage();
+                Utils.alert(getActivity(), "Error", message);
             }
         });
     }

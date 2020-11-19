@@ -40,20 +40,23 @@ import org.ajoberstar.grgit.Grgit
 Grgit grgit = Grgit.open()
 
 android {
-    buildToolsVersion "30.0.0"
+    buildToolsVersion "30.0.2"
     ndkVersion "21.3.6528147"
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "com.launchkey.android.authenticator.demo"
-        minSdkVersion 15
-        targetSdkVersion 29
+        minSdkVersion 21
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         defaultPublishConfig getBuildToUpload()
     }
 
-    flavorDimensions "languageApp", "env", "mapProvider"
+
+    buildFeatures.viewBinding = true
+
+    flavorDimensions "languageApp", "env", "mapProvider", "fips"
     productFlavors {
         javaApp {
             dimension "languageApp"
@@ -79,6 +82,12 @@ android {
         openStreetMaps {
             dimension "mapProvider"
             versionNameSuffix ".openStreetMaps"
+        }
+        fips_on {
+            dimension "fips"
+        }
+        fips_off {
+            dimension "fips"
         }
     }
 
@@ -144,26 +153,27 @@ def getBuildToUpload(){
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
+    def ccj = "libs/ccj-3.0.1.aar"
+    if (file(ccj).exists()) {
+        fips_onImplementation files(ccj)
+    }
+
     // Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Support
-    // TODO: Update to androidX for the Auth SDK Sample App
     def supportLibsVersion = "28.0.0"
-    implementation "com.android.support:support-v4:$supportLibsVersion"
-    implementation "com.android.support:appcompat-v7:$supportLibsVersion"
-    implementation "com.android.support:design:$supportLibsVersion"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0'
 
     // Google Play Services
-    // Last versions that didn't use androidx
-    implementation "com.google.android.gms:play-services-base:16.1.0"
-    implementation "com.google.android.gms:play-services-location:16.0.0"
-    implementation "com.google.android.gms:play-services-wearable:16.0.1"
+    implementation "com.google.android.gms:play-services-base:17.2.1"
+    implementation "com.google.android.gms:play-services-location:17.0.0"
+    implementation "com.google.android.gms:play-services-wearable:17.0.0"
 
     // Firebase
-    // Last versions that supported minsdkversion 15
-    implementation "com.google.firebase:firebase-core:16.0.9"
-    implementation "com.google.firebase:firebase-messaging:17.6.0"
+    implementation "com.google.firebase:firebase-messaging:20.3.0"
 
     // Open Street Maps updated to latest version for API 29
     openStreetMapsImplementation 'org.osmdroid:osmdroid-android:6.1.2@aar'
