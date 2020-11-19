@@ -1,41 +1,30 @@
 package com.launchkey.android.authenticator.demo.ui.fragment;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.demo.util.Utils;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
-import com.launchkey.android.authenticator.sdk.security.SecurityFactor;
-import com.launchkey.android.authenticator.sdk.security.SecurityService;
+import com.launchkey.android.authenticator.demo.databinding.DemoFragmentSecurityInfoBinding;
+import com.launchkey.android.authenticator.demo.ui.fragment.security.SecurityFactor;
+import com.launchkey.android.authenticator.demo.ui.fragment.security.SecurityService;
 
 import java.util.List;
 
-public class SecurityInfoFragment extends BaseDemoFragment implements SecurityService.SecurityStatusListener {
+public class SecurityInfoFragment extends BaseDemoFragment<DemoFragmentSecurityInfoBinding> implements SecurityService.SecurityStatusListener {
+    @NonNull
+    private final SecurityService securityService = SecurityService.getInstance();
 
-    private TextView textView;
-    private SecurityService securityService;
-
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.demo_fragment_security_info, container, false);
-        return postInflationSetup(root);
-    }
-
-    private View postInflationSetup(View root) {
-        textView = root.findViewById(R.id.demo_fragment_securityinfo_text);
-        return root;
+    public SecurityInfoFragment() {
+        super(R.layout.demo_fragment_security_info);
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        securityService = SecurityService.getInstance(getActivity());
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        binding = DemoFragmentSecurityInfoBinding.bind(view);
     }
 
     @Override
@@ -45,12 +34,8 @@ public class SecurityInfoFragment extends BaseDemoFragment implements SecuritySe
     }
 
     @Override
-    public void onSecurityStatusUpdate(boolean success, List<SecurityFactor> list, BaseError baseError) {
-        if (success) {
-            showSecurityInformation(list);
-        } else {
-            Utils.simpleSnackbar(textView, getString(R.string.demo_generic_error, baseError.getMessage()));
-        }
+    public void onSecurityStatusUpdate(List<SecurityFactor> list) {
+        showSecurityInformation(list);
     }
 
     private void showSecurityInformation(List<SecurityFactor> list) {
@@ -80,20 +65,20 @@ public class SecurityInfoFragment extends BaseDemoFragment implements SecuritySe
             message = getString(R.string.demo_activity_list_feature_security_info_no_message);
         }
 
-        textView.setText(message);
+        binding.demoFragmentSecurityinfoText.setText(message);
     }
 
     private String getFactorName(SecurityFactor f) {
-        switch (f.getFactor()) {
-            case SecurityService.FACTOR_PIN:
+        switch (f.getAuthMethod()) {
+            case PIN_CODE:
                 return getString(R.string.demo_activity_list_feature_security_info_pin_code);
-            case SecurityService.FACTOR_CIRCLE:
+            case CIRCLE_CODE:
                 return getString(R.string.demo_activity_list_feature_security_info_circle_code);
-            case SecurityService.FACTOR_PROXIMITY:
+            case WEARABLES:
                 return getString(R.string.demo_activity_list_feature_security_info_bluetooth_devices);
-            case SecurityService.FACTOR_GEOFENCING:
+            case LOCATIONS:
                 return getString(R.string.demo_activity_list_feature_security_info_geofencing);
-            case SecurityService.FACTOR_FINGERPRINT:
+            case BIOMETRIC:
                 return getString(R.string.demo_activity_list_feature_security_info_fingerprint);
             default:
                 return getString(R.string.demo_activity_list_feature_security_info_none);
@@ -101,12 +86,12 @@ public class SecurityInfoFragment extends BaseDemoFragment implements SecuritySe
     }
 
     private String getFactorCategory(SecurityFactor f) {
-        switch (f.getCategory()) {
-            case SecurityService.CATEGORY_KNOWLEDGE:
+        switch (f.getType()) {
+            case KNOWLEDGE:
                 return getString(R.string.demo_activity_list_feature_security_info_knowledge);
-            case SecurityService.CATEGORY_INHERENCE:
+            case INHERENCE:
                 return getString(R.string.demo_activity_list_feature_security_info_inherence);
-            case SecurityService.CATEGORY_POSSESSION:
+            case POSSESSION:
                 return getString(R.string.demo_activity_list_feature_security_info_possession);
             default:
                 return getString(R.string.demo_activity_list_feature_security_info_none);

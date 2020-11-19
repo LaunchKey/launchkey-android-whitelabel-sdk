@@ -2,103 +2,66 @@ package com.launchkey.android.authenticator.demo.ui.fragment
 
 import android.app.ProgressDialog
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import com.launchkey.android.authenticator.demo.R
-import com.launchkey.android.authenticator.demo.util.Utils
-import com.launchkey.android.authenticator.sdk.AuthenticatorManager
-import com.launchkey.android.authenticator.sdk.DeviceLinkedEventCallback
-import com.launchkey.android.authenticator.sdk.device.Device
-import com.launchkey.android.authenticator.sdk.error.BaseError
+import com.launchkey.android.authenticator.demo.databinding.DemoFragmentLinkBinding
+import com.launchkey.android.authenticator.demo.util.Utils.finish
+import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.DeviceLinkedEventCallback
+import com.launchkey.android.authenticator.sdk.core.util.CompositeDisposable
+import java.util.regex.Pattern
 
-class CustomLinkingFragment : BaseDemoFragment() {
-
-    private var mCode: EditText? = null
-    private var mName: EditText? = null
-    private var mProvideName: CheckBox? = null
-    private var mOverrideNameIfUsed: CheckBox? = null
+class CustomLinkingFragment : BaseDemoFragment<DemoFragmentLinkBinding>(R.layout.demo_fragment_link) {
     private var mLinkingDialog: ProgressDialog? = null
-
-    private var mAuthenticatorManager: AuthenticatorManager? = null
-    private var mOnDeviceLinked: DeviceLinkedEventCallback? = null
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val root = inflater.inflate(R.layout.demo_fragment_link, container, false)
-        return postInflationSetup(root)
+    private val mAuthenticatorManager = AuthenticatorManager.instance
+    private val compositeDisposable = CompositeDisposable()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupUi(view)
     }
 
-    private fun postInflationSetup(root: View): View {
-
-        mCode = root.findViewById<View>(R.id.demo_link_edit_code) as EditText
-        mName = root.findViewById<View>(R.id.demo_link_edit_name) as EditText
-
-        mProvideName = root.findViewById<View>(R.id.demo_link_checkbox_devicename_custom) as CheckBox
-        mProvideName!!.setOnCheckedChangeListener { buttonView, isChecked -> mName!!.isEnabled = isChecked }
-
-        mOverrideNameIfUsed = root.findViewById<View>(R.id.demo_link_checkbox_devicename_override) as CheckBox
-
-        val link = root.findViewById<View>(R.id.demo_link_button) as Button
-        link.setOnClickListener { onLink() }
-
+    private fun setupUi(root: View) {
+        binding = DemoFragmentLinkBinding.bind(root)
+        binding!!.demoLinkCheckboxDevicenameCustom.setOnCheckedChangeListener { buttonView, isChecked -> binding!!.demoLinkEditName.isEnabled = isChecked }
+        binding!!.demoLinkButton.setOnClickListener { onLink() }
         mLinkingDialog = ProgressDialog(activity, R.style.Theme_WhiteLabel_Dialog)
         mLinkingDialog!!.isIndeterminate = true
-
-        return root
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        mAuthenticatorManager = AuthenticatorManager.getInstance()
-        mOnDeviceLinked = object : DeviceLinkedEventCallback() {
-
-            override fun onEventResult(successful: Boolean, error: BaseError?, device: Device?) {
-
-                mLinkingDialog!!.dismiss()
-
-                if (successful) {
-                    Utils.finish(this@CustomLinkingFragment)
-                } else {
-                    showAlert("Error", Utils.getMessageForBaseError(error))
-                }
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mAuthenticatorManager!!.registerForEvents(mOnDeviceLinked)
     }
 
     override fun onPause() {
         super.onPause()
-        mAuthenticatorManager!!.unregisterForEvents(mOnDeviceLinked)
+        compositeDisposable.clear()
     }
 
     private fun onLink() {
-        val linkingCode = mCode!!.text.toString().trim { it <= ' ' }
-        val customDeviceName = mName!!.text.toString().trim { it <= ' ' }
-
-        if (!linkingCode.matches(AuthenticatorManager.REGEX_LINKING_CODE.toRegex())) {
-            showAlert("Error", "Linking code has illegal characters. Allowed structure: " + AuthenticatorManager.REGEX_LINKING_CODE)
+        val linkingCode = binding!!.demoLinkEditCode.text.toString().trim()
+        val customDeviceName = binding!!.demoLinkEditName.text.toString().trim()
+        if (!Pattern.matches(AuthenticatorManager.REGEX_LINKING_CODE, linkingCode)) {
+            showAlert("Error", "Linking code has illegal characters. Allowed structure: "
+                    + AuthenticatorManager.REGEX_LINKING_CODE)
             return
         }
 
         //depending on the desired approach, it is possible to provide a custom device name
         // if no custom device name is provided, a default one will be generated
         // based on the model and manufacturer.
-
         mLinkingDialog!!.show()
         mLinkingDialog!!.setMessage("Verifying linking code...")
+        val deviceName = if (binding!!.demoLinkCheckboxDevicenameCustom.isChecked) customDeviceName else null
+        val overrideNameIfUsed = binding!!.demoLinkCheckboxDevicenameOverride.isChecked
+        compositeDisposable.add(mAuthenticatorManager.linkDevice(getString(R.string.authenticator_sdk_key), linkingCode, deviceName, overrideNameIfUsed, object : DeviceLinkedEventCallback() {
+            override fun onSuccess(device: Device) {
+                mLinkingDialog!!.dismiss()
+                finish(this@CustomLinkingFragment)
+            }
 
-        val deviceName = if (mProvideName!!.isChecked) customDeviceName else null
-        val overrideNameIfUsed = mOverrideNameIfUsed!!.isChecked
-
-        mAuthenticatorManager!!.linkDevice(linkingCode, deviceName, overrideNameIfUsed, null)
+            override fun onFailure(e: Exception) {
+                mLinkingDialog!!.dismiss()
+                showAlert("Error", e.message)
+            }
+        }))
     }
 
     private fun showAlert(title: String, message: String?) {

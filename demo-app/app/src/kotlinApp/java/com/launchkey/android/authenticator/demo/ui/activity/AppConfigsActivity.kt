@@ -1,261 +1,261 @@
 package com.launchkey.android.authenticator.demo.ui.activity
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.res.Resources
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
 import android.view.View
-import android.widget.EditText
-import android.widget.Switch
-import android.widget.TextView
-
+import androidx.appcompat.app.AlertDialog
 import com.launchkey.android.authenticator.demo.R
-import com.launchkey.android.authenticator.demo.util.KeyStorage
-import com.launchkey.android.authenticator.sdk.AuthenticatorConfig
-import com.launchkey.android.authenticator.sdk.SimpleOperationCallback
-import com.launchkey.android.authenticator.sdk.error.BaseError
-import com.launchkey.android.authenticator.sdk.security.SecurityService
+import com.launchkey.android.authenticator.demo.databinding.DemoActivityConfigsBinding
+import com.launchkey.android.authenticator.sdk.core.auth_method_management.AuthMethod
+import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorConfig
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback
+import com.launchkey.android.authenticator.sdk.ui.AuthenticatorUIConfig
 
-class AppConfigsActivity : BaseDemoActivity() {
-
-
-    private var mPinCode: Switch? = null
-    private var mCircleCode: Switch? = null
-    private var mWearables: Switch? = null
-    private var mLocations: Switch? = null
-    private var mFingerprintScan: Switch? = null
-    private var mDelayWearables: EditText? = null
-    private var mDelayLocations: EditText? = null
-    private var mAuthFailure: EditText? = null
-    private var mAutoUnlink: EditText? = null
-    private var mAutoUnlinkWarning: EditText? = null
-    private var mAllowChangesWhenUnlinked: Switch? = null
-    private var mEndpoint: TextView? = null
-
+class AppConfigsActivity : BaseDemoActivity<DemoActivityConfigsBinding>(R.layout.demo_activity_configs) {
+    private var originalSdkKey: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.demo_activity_configs)
-
-        mPinCode = findViewById(R.id.configs_pc)
-        mCircleCode = findViewById(R.id.configs_cc)
-        mWearables = findViewById(R.id.configs_w)
-        mLocations = findViewById(R.id.configs_l)
-        mFingerprintScan = findViewById(R.id.configs_fs)
-
-        mDelayWearables = findViewById(R.id.configs_delay_wearables)
-        mDelayLocations = findViewById(R.id.configs_delay_locations)
-
-        mAuthFailure = findViewById(R.id.configs_authfailure)
-        mAutoUnlink = findViewById(R.id.configs_autounlink)
-        mAutoUnlinkWarning = findViewById(R.id.configs_autounlinkwarning)
-
-        mAllowChangesWhenUnlinked = findViewById(R.id.configs_allowchangesunlinked)
-        mEndpoint = findViewById(R.id.configs_endpoint)
-
-        findViewById<View>(R.id.configs_button).setOnClickListener { onReinitSdk() }
-
+        binding = DemoActivityConfigsBinding.bind(findViewById(R.id.configs_root))
+        binding!!.configsButton.setOnClickListener { onReinitSdk() }
+        binding!!.configsBuildHash.text = getString(
+                R.string.demo_commit_hash_title,
+                getString(R.string.demo_commit_hash))
         updateUi()
     }
 
     @SuppressLint("SetTextI18n")
     private fun updateUi() {
+        val i = intent
+        if (i != null) {
+            originalSdkKey = i.getStringExtra(ListDemoActivity.EXTRA_SDK_KEY)
+            binding!!.configsSdkKey.setText(if (originalSdkKey == null) "" else originalSdkKey)
+        }
 
         // Prep all hints at runtime
-
         val delaySecondsMin = 0
         val delaySecondsMax = 60 * 60 * 24
         val delayHints = getString(
                 R.string.demo_activity_list_feature_config_hints_format, delaySecondsMin, delaySecondsMax)
-        mDelayWearables!!.hint = delayHints
-        mDelayLocations!!.hint = delayHints
-
+        binding!!.configsDelayWearables.hint = delayHints
+        binding!!.configsDelayLocations.hint = delayHints
         val authFailureHint = getString(
                 R.string.demo_activity_list_feature_config_hints_format,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTHFAILURE_MINIMUM,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTHFAILURE_MAXIMUM)
-        mAuthFailure!!.hint = authFailureHint
-
+        binding!!.configsAuthfailure.hint = authFailureHint
         val autoUnlinkHint = getString(
                 R.string.demo_activity_list_feature_config_hints_format,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_MINIMUM,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_MAXIMUM)
-        mAutoUnlink!!.hint = autoUnlinkHint
+        binding!!.configsAutounlink.hint = autoUnlinkHint
 
         // For the warning, max is derived from Auto Unlink max - 1
         val autoUnlinkWarningHint = getString(
                 R.string.demo_activity_list_feature_config_hints_format,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_WARNING_NONE,
                 AuthenticatorConfig.Builder.THRESHOLD_AUTOUNLINK_MAXIMUM - 1)
-        mAutoUnlinkWarning!!.hint = autoUnlinkWarningHint
+        binding!!.configsAutounlinkwarning.hint = autoUnlinkWarningHint
+        val config = authenticatorManager.config
 
-        if (!authenticatorManager.isInitialized) {
-            return
-        }
-
-        val config = authenticatorManager.config ?: return
-
-// Update UI to match SDK config passed upon initialization
-
-        mPinCode!!.isChecked = config.isMethodAllowedSimple(SecurityService.FACTOR_PIN)
-        mCircleCode!!.isChecked = config.isMethodAllowedSimple(SecurityService.FACTOR_CIRCLE)
-        mWearables!!.isChecked = config.isMethodAllowedSimple(SecurityService.FACTOR_PROXIMITY)
-        mLocations!!.isChecked = config.isMethodAllowedSimple(SecurityService.FACTOR_GEOFENCING)
-        mFingerprintScan!!.isChecked = config.isMethodAllowedSimple(SecurityService.FACTOR_FINGERPRINT)
-        mDelayWearables!!.setText(Integer.toString(config.activationDelayProximitySeconds()))
-        mDelayLocations!!.setText(Integer.toString(config.activationDelayGeofencingSeconds()))
-        mAuthFailure!!.setText(Integer.toString(config.thresholdAuthFailure()))
-        mAutoUnlink!!.setText(Integer.toString(config.thresholdAutoUnlink()))
-        mAutoUnlinkWarning!!.setText(Integer.toString(config.thresholdAutoUnlinkWarning()))
-        mAllowChangesWhenUnlinked!!.isChecked = config.areSecurityChangesAllowedWhenUnlinked()
-
+        // Update UI to match SDK config passed upon initialization
+        binding!!.configsPc.isChecked = config.isMethodAllowed(AuthMethod.PIN_CODE)
+        binding!!.configsCc.isChecked = config.isMethodAllowed(AuthMethod.CIRCLE_CODE)
+        binding!!.configsW.isChecked = config.isMethodAllowed(AuthMethod.WEARABLES)
+        binding!!.configsL.isChecked = config.isMethodAllowed(AuthMethod.LOCATIONS)
+        binding!!.configsFs.isChecked = config.isMethodAllowed(AuthMethod.BIOMETRIC)
+        binding!!.configsDelayWearables.setText(Integer.toString(config.activationDelayWearablesSeconds()))
+        binding!!.configsDelayLocations.setText(Integer.toString(config.activationDelayLocationsSeconds()))
+        binding!!.configsAuthfailure.setText(Integer.toString(config.thresholdAuthFailure()))
+        binding!!.configsAutounlink.setText(Integer.toString(config.thresholdAutoUnlink()))
+        binding!!.configsAutounlinkwarning.setText(Integer.toString(config.thresholdAutoUnlinkWarning()))
+        binding!!.configsAllowchangesunlinked.isChecked = authenticatorUIManager.config.areSecurityChangesAllowedWhenUnlinked()
         try {
-
-            val subdomain = getString(R.string.lk_auth_sdk_oendsub)
-            val domain = getString(R.string.lk_auth_sdk_oenddom)
+            // If overriding domain or subdomain is null, default values will be used when specs are built
+            val res = resources
+            val subdomainOverrideResId = res.getIdentifier("lk_auth_sdk_oendsub", "string", packageName)
+            val subdomainOverride: String?
+            subdomainOverride = if (subdomainOverrideResId > 0) {
+                res.getString(subdomainOverrideResId)
+            } else {
+                null
+            }
+            val subdomain: String
+            subdomain = subdomainOverride ?: "mapi"
+            val domainOverrideResId = res.getIdentifier("lk_auth_sdk_oenddom", "string", packageName)
+            val domainOverride: String?
+            domainOverride = if (domainOverrideResId > 0) {
+                res.getString(domainOverrideResId)
+            } else {
+                null
+            }
+            val domain: String
+            domain = domainOverride ?: "launchkey.com"
             val endpoint = getString(
                     R.string.demo_activity_list_feature_config_endpoint_format, subdomain, domain)
-            mEndpoint!!.text = endpoint
-            mEndpoint!!.visibility = View.VISIBLE
+            binding!!.configsEndpoint.text = endpoint
+            binding!!.configsEndpoint.visibility = View.VISIBLE
         } catch (e: Resources.NotFoundException) {
             // Do nothing
         }
-
     }
 
     private fun onReinitSdk() {
-
-        val key = KeyStorage.getInstance(this)!!.key
-
-        if (key == null || key.trim { it <= ' ' }.isEmpty()) {
-
+        // Reinitialize the SDK with whichever key we had last
+        val key = binding!!.configsSdkKey.text.toString()
+        if (key.trim { it <= ' ' }.isEmpty()) {
             showError("Key cannot be null or empty.")
             return
         }
-
-        val allowPinCode = mPinCode!!.isChecked
-        val allowCircleCode = mCircleCode!!.isChecked
-        val allowWearables = mWearables!!.isChecked
-        val allowLocations = mLocations!!.isChecked
-        val allowFingerprintScan = mFingerprintScan!!.isChecked
-        val delayWearablesStr = mDelayWearables!!.text.toString()
-
+        val sslPinningEnabled = binding!!.configsSslPinning.isChecked
+        val allowPinCode = binding!!.configsPc.isChecked
+        val allowCircleCode = binding!!.configsCc.isChecked
+        val allowWearables = binding!!.configsW.isChecked
+        val allowLocations = binding!!.configsL.isChecked
+        val allowFingerprintScan = binding!!.configsFs.isChecked
+        val delayWearablesStr = binding!!.configsDelayWearables.text.toString()
         if (delayWearablesStr.trim { it <= ' ' }.isEmpty()) {
             showError("Activation delay for Wearables cannot be empty")
             return
         }
-
         val delayWearables: Int
-        try {
-            delayWearables = Integer.parseInt(delayWearablesStr)
+        delayWearables = try {
+            delayWearablesStr.toInt()
         } catch (e: NumberFormatException) {
             showError("Activation delay for Wearables must be a number")
             return
         }
-
-        val delayLocationsStr = mDelayLocations!!.text.toString()
-
+        val delayLocationsStr = binding!!.configsDelayLocations.text.toString()
         if (delayLocationsStr.trim { it <= ' ' }.isEmpty()) {
             showError("Activation delay for Locations cannot be empty")
             return
         }
-
         val delayLocations: Int
-        try {
-            delayLocations = Integer.parseInt(delayLocationsStr)
+        delayLocations = try {
+            delayLocationsStr.toInt()
         } catch (e: NumberFormatException) {
             showError("Activation delay for Locations must be a number")
             return
         }
-
-        val authFailureStr = mAuthFailure!!.text.toString()
-
+        val authFailureStr = binding!!.configsAuthfailure.text.toString()
         if (authFailureStr.trim { it <= ' ' }.isEmpty()) {
             showError("Auth Failure threshold cannot be empty")
             return
         }
-
         val authFailure: Int
-        try {
-            authFailure = Integer.parseInt(authFailureStr)
+        authFailure = try {
+            authFailureStr.toInt()
         } catch (e: NumberFormatException) {
             showError("Auth Failure threshold must be a number")
             return
         }
-
-        val autoUnlinkStr = mAutoUnlink!!.text.toString()
-
+        val autoUnlinkStr = binding!!.configsAutounlink.text.toString()
         if (autoUnlinkStr.trim { it <= ' ' }.isEmpty()) {
             showError("Auto Unlink threshold cannot be empty")
             return
         }
-
         val autoUnlink: Int
-        try {
-            autoUnlink = Integer.parseInt(autoUnlinkStr)
+        autoUnlink = try {
+            autoUnlinkStr.toInt()
         } catch (e: NumberFormatException) {
             showError("Auto Unlink threshold must be a number")
             return
         }
-
-        val autoUnlinkWarningStr = mAutoUnlinkWarning!!.text.toString()
-
+        val autoUnlinkWarningStr = binding!!.configsAutounlinkwarning.text.toString()
         if (autoUnlinkWarningStr.trim { it <= ' ' }.isEmpty()) {
             showError("Auto Unlink warning threshold cannot be empty")
             return
         }
-
         val autoUnlinkWarning: Int
-        try {
-            autoUnlinkWarning = Integer.parseInt(autoUnlinkWarningStr)
+        autoUnlinkWarning = try {
+            autoUnlinkWarningStr.toInt()
         } catch (e: NumberFormatException) {
             showError("Auto Unlink warning threshold must be a number")
             return
         }
-
-        val allowChangesWhenUnlinked = mAllowChangesWhenUnlinked!!.isChecked
+        val allowChangesWhenUnlinked = binding!!.configsAllowchangesunlinked.isChecked
 
         // Let Authenticator SDK validate threshold arguments
-
         val config: AuthenticatorConfig
-
+        val uiConfig: AuthenticatorUIConfig
         try {
-
-            config = AuthenticatorConfig.Builder(this, key)
-                    .allowAuthMethod(SecurityService.FACTOR_PIN, allowPinCode)
-                    .allowAuthMethod(SecurityService.FACTOR_CIRCLE, allowCircleCode)
-                    .allowAuthMethod(SecurityService.FACTOR_PROXIMITY, allowWearables)
-                    .allowAuthMethod(SecurityService.FACTOR_GEOFENCING, allowLocations)
-                    .allowAuthMethod(SecurityService.FACTOR_FINGERPRINT, allowFingerprintScan)
-                    .activationDelayProximity(delayWearables)
-                    .activationDelayGeofencing(delayLocations)
+            val builder = AuthenticatorConfig.Builder()
+            disallowAuthMethod(builder, AuthMethod.PIN_CODE, allowPinCode)
+            disallowAuthMethod(builder, AuthMethod.CIRCLE_CODE, allowCircleCode)
+            disallowAuthMethod(builder, AuthMethod.WEARABLES, allowWearables)
+            disallowAuthMethod(builder, AuthMethod.LOCATIONS, allowLocations)
+            disallowAuthMethod(builder, AuthMethod.BIOMETRIC, allowFingerprintScan)
+            config = builder
+                    .activationDelayWearable(delayWearables)
+                    .activationDelayLocation(delayLocations)
                     .thresholdAuthFailure(authFailure)
-                    .thresholdAutoUnlink(autoUnlink, autoUnlinkWarning)
-                    .allowSecurityChangesWhenUnlinked(allowChangesWhenUnlinked)
+                    .thresholdAutoUnlink(autoUnlink)
+                    .thresholdAutoUnlinkWarning(autoUnlinkWarning)
+                    .keyPairSize(AuthenticatorConfig.Builder.KEYSIZE_MINIMUM)
+                    .sslPinning(sslPinningEnabled)
                     .build()
+            uiConfig = AuthenticatorUIConfig.Builder()
+                    .allowSecurityChangesWhenUnlinked(allowChangesWhenUnlinked)
+                    .theme(R.style.DemoAppTheme)
+                    .build(this)
         } catch (e: IllegalArgumentException) {
-
-            showError(e.message!!)
+            showError(e.message)
             return
         }
+        if (authenticatorManager.isDeviceLinked) {
+            // Force-unlink to clear any data before re-initializing
+            authenticatorManager.unlinkDevice(null, object : UnlinkDeviceEventCallback() {
+                override fun onSuccess(device: Device) {
+                    authenticatorManager.initialize(config)
+                    authenticatorUIManager.initialize(uiConfig)
+                    val i = Intent()
+                    i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, key)
+                    setResult(0, i)
+                    finish()
+                }
 
-        // Force-unlink to clear any data before re-initializing
-        authenticatorManager.unlinkCurrentDevice(object : SimpleOperationCallback<Any> {
-
-            override fun onResult(successful: Boolean, error: BaseError?, extra: Any?) {
-
-                authenticatorManager.initialize(config)
-                finish()
-            }
-        })
+                override fun onFailure(e: Exception) {
+                    authenticatorManager.initialize(config)
+                    authenticatorUIManager.initialize(uiConfig)
+                    val i = Intent()
+                    i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, key)
+                    setResult(0, i)
+                    finish()
+                }
+            })
+        } else {
+            authenticatorManager.initialize(config)
+            authenticatorUIManager.initialize(uiConfig)
+            val i = Intent()
+            i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, key)
+            setResult(0, i)
+            finish()
+        }
     }
 
-    private fun showError(message: String) {
+    override fun onBackPressed() {
+        val i = Intent()
+        i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, originalSdkKey)
+        setResult(0, i)
+        super.onBackPressed()
+    }
 
+    private fun showError(message: String?) {
         AlertDialog.Builder(this)
                 .setTitle("Could not reinitialize SDK")
                 .setMessage(message)
                 .setNeutralButton(R.string.demo_generic_ok, null)
                 .create()
                 .show()
+    }
+
+    companion object {
+        private fun disallowAuthMethod(configBuilder: AuthenticatorConfig.Builder, authMethod: AuthMethod, allow: Boolean) {
+            if (!allow) {
+                configBuilder.disallowAuthMethod(authMethod)
+            }
+        }
     }
 }

@@ -2,59 +2,52 @@ package com.launchkey.android.authenticator.demo.ui.fragment;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 
 import com.launchkey.android.authenticator.demo.R;
+import com.launchkey.android.authenticator.demo.databinding.DemoFragmentLinkBinding;
 import com.launchkey.android.authenticator.demo.util.Utils;
-import com.launchkey.android.authenticator.sdk.AuthenticatorManager;
-import com.launchkey.android.authenticator.sdk.DeviceLinkedEventCallback;
-import com.launchkey.android.authenticator.sdk.device.Device;
-import com.launchkey.android.authenticator.sdk.error.BaseError;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.DeviceLinkedEventCallback;
+import com.launchkey.android.authenticator.sdk.core.util.CompositeDisposable;
 
-public class CustomLinkingFragment extends BaseDemoFragment {
-
-    private EditText mCode;
-    private EditText mName;
-    private CheckBox mProvideName;
-    private CheckBox mOverrideNameIfUsed;
+public class CustomLinkingFragment extends BaseDemoFragment<DemoFragmentLinkBinding> {
     private ProgressDialog mLinkingDialog;
 
-    private AuthenticatorManager mAuthenticatorManager;
-    private DeviceLinkedEventCallback mOnDeviceLinked;
+    private final @NonNull AuthenticatorManager mAuthenticatorManager = AuthenticatorManager.instance;
+    private final @NonNull CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.demo_fragment_link, container, false);
-        return postInflationSetup(root);
+    public CustomLinkingFragment() {
+        super(R.layout.demo_fragment_link);
     }
 
-    private View postInflationSetup(View root) {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setupUi(view);
+    }
 
-        mCode = root.findViewById(R.id.demo_link_edit_code);
-        mName = root.findViewById(R.id.demo_link_edit_name);
+    private void setupUi(View root) {
+        binding = DemoFragmentLinkBinding.bind(root);
 
-        mProvideName = root.findViewById(R.id.demo_link_checkbox_devicename_custom);
-        mProvideName.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.demoLinkCheckboxDevicenameCustom.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mName.setEnabled(isChecked);
+                binding.demoLinkEditName.setEnabled(isChecked);
             }
         });
 
-        mOverrideNameIfUsed = root.findViewById(R.id.demo_link_checkbox_devicename_override);
 
-        Button link = root.findViewById(R.id.demo_link_button);
-        link.setOnClickListener(new View.OnClickListener() {
+        binding.demoLinkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onLink();
@@ -63,45 +56,17 @@ public class CustomLinkingFragment extends BaseDemoFragment {
 
         mLinkingDialog = new ProgressDialog(getActivity(), R.style.Theme_WhiteLabel_Dialog);
         mLinkingDialog.setIndeterminate(true);
-
-        return root;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mAuthenticatorManager = AuthenticatorManager.getInstance();
-        mOnDeviceLinked = new DeviceLinkedEventCallback() {
-
-            @Override
-            public void onEventResult(boolean successful, BaseError error, Device device) {
-
-                mLinkingDialog.dismiss();
-
-                if (successful) {
-                    Utils.finish(CustomLinkingFragment.this);
-                } else {
-                    showAlert("Error", Utils.getMessageForBaseError(error));
-                }
-            }
-        };
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mAuthenticatorManager.registerForEvents(mOnDeviceLinked);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mAuthenticatorManager.unregisterForEvents(mOnDeviceLinked);
+        compositeDisposable.clear();
     }
 
     private void onLink() {
-        String linkingCode = mCode.getText().toString().trim();
-        String customDeviceName = mName.getText().toString().trim();
+        String linkingCode = binding.demoLinkEditCode.getText().toString().trim();
+        String customDeviceName = binding.demoLinkEditName.getText().toString().trim();
 
         if (!linkingCode.matches(AuthenticatorManager.REGEX_LINKING_CODE)) {
             showAlert("Error", "Linking code has illegal characters. Allowed structure: "
@@ -116,10 +81,23 @@ public class CustomLinkingFragment extends BaseDemoFragment {
         mLinkingDialog.show();
         mLinkingDialog.setMessage("Verifying linking code...");
 
-        final String deviceName = mProvideName.isChecked() ? customDeviceName : null;
-        final boolean overrideNameIfUsed = mOverrideNameIfUsed.isChecked();
+        final String deviceName = binding.demoLinkCheckboxDevicenameCustom.isChecked() ? customDeviceName : null;
+        final boolean overrideNameIfUsed = binding.demoLinkCheckboxDevicenameOverride.isChecked();
 
-        mAuthenticatorManager.linkDevice(linkingCode, deviceName, overrideNameIfUsed, null);
+        compositeDisposable.add(mAuthenticatorManager.linkDevice(getString(R.string.authenticator_sdk_key), linkingCode, deviceName, overrideNameIfUsed, new DeviceLinkedEventCallback() {
+
+            @Override
+            public void onSuccess(@NonNull final Device device) {
+                mLinkingDialog.dismiss();
+                Utils.finish(CustomLinkingFragment.this);
+            }
+
+            @Override
+            public void onFailure(final @NonNull Exception e) {
+                mLinkingDialog.dismiss();
+                showAlert("Error", e.getMessage());
+            }
+        }));
     }
 
     private void showAlert(String title, String message) {

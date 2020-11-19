@@ -2,21 +2,27 @@ package com.launchkey.android.authenticator.demo.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.Toolbar;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 
 import com.launchkey.android.authenticator.demo.R;
+import com.launchkey.android.authenticator.demo.databinding.DemoActivityFragmentBinding;
 import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
 import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback;
 import com.launchkey.android.authenticator.sdk.core.exception.DeviceUnlinkedButFailedToNotifyServerException;
 
-public class GenericFragmentDemoActivity extends BaseDemoActivity {
+public class GenericFragmentDemoActivity extends BaseDemoActivity<DemoActivityFragmentBinding> {
 
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_FRAGMENT_CLASS = "fragment_class";
     public static final String EXTRA_GO_BACK_ON_UNLINK = "go_back_on_unlink";
+
+    public GenericFragmentDemoActivity() {
+        super(R.layout.demo_activity_fragment);
+    }
 
     private boolean goBackOnUnlink;
     private final @NonNull UnlinkDeviceEventCallback unlinkDeviceEventCallback = new UnlinkDeviceEventCallback() {
@@ -38,16 +44,14 @@ public class GenericFragmentDemoActivity extends BaseDemoActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.demo_activity_fragment);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.demo_activity_fragment_toolbar);
-        setSupportActionBar(toolbar);
+        binding = DemoActivityFragmentBinding.bind(findViewById(R.id.demo_activity_fragment_root));
+
+        setSupportActionBar(binding.demoActivityFragmentToolbar);
 
         Intent i = getIntent();
         Bundle extras = i == null ? null : i.getExtras();
-
         if (getSupportActionBar() != null) {
-
             String title = extras == null ? null : extras.getString(EXTRA_TITLE);
             getSupportActionBar().setTitle(title == null ? "Demo" : title);
         }
@@ -63,7 +67,7 @@ public class GenericFragmentDemoActivity extends BaseDemoActivity {
             return;
         }
 
-        goBackOnUnlink = extras == null ? false : extras.getBoolean(EXTRA_GO_BACK_ON_UNLINK);
+        goBackOnUnlink = extras.getBoolean(EXTRA_GO_BACK_ON_UNLINK);
 
         //Instantiate the Fragment by name that was passed via extra (Bundle) and if not null,
         // then place it in the container.
@@ -77,12 +81,10 @@ public class GenericFragmentDemoActivity extends BaseDemoActivity {
             return;
         }
 
-        if (f != null) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .add(R.id.demo_activity_fragment_container, f)
-                    .commit();
-        }
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.demo_activity_fragment_container, f)
+                .commit();
     }
 
     @Override

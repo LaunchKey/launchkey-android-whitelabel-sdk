@@ -4,27 +4,19 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
+import android.widget.AdapterView.OnItemClickListener
 import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.TextView
 import com.launchkey.android.authenticator.demo.R
-import com.launchkey.android.authenticator.sdk.session.Session
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Session
 import java.util.*
 
-class DemoSessionsAdapter(private val mContext: Context, sessions: List<Session>, private val mItemClickListener: AdapterView.OnItemClickListener?) : BaseAdapter() {
-    private var mSessions: List<Session> = ArrayList<Session>()
-    private val mInternalClickListener: View.OnClickListener
-
-    init {
-        mSessions = sessions
-
-        mInternalClickListener = View.OnClickListener { v ->
-            if (v != null && v.tag != null) {
-                val position = v.tag as Int
-
-                mItemClickListener?.onItemClick(null, v, position, position.toLong())
-            }
+class DemoSessionsAdapter(private val context: Context, private val mSessions: List<Session>, private val mItemClickListener: OnItemClickListener?) : BaseAdapter() {
+    private val mInternalClickListener = View.OnClickListener { v ->
+        if (v != null && v.tag != null) {
+            val position = v.tag as Int
+            mItemClickListener?.onItemClick(null, v, position, position.toLong())
         }
     }
 
@@ -40,47 +32,31 @@ class DemoSessionsAdapter(private val mContext: Context, sessions: List<Session>
         return position.toLong()
     }
 
-    override fun getView(position: Int, convertView: View, parent: ViewGroup): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
 
         //Relying on the authorizations layout for items
-
-        var v: View? = convertView
-
+        var v = convertView
         if (v == null) {
-            v = LayoutInflater
-                    .from(mContext)
+            v = LayoutInflater.from(context)
                     .inflate(R.layout.demo_authorizations_item, parent, false)
         }
-
         val s = getItem(position)
 
         //fetch an application's icon via its url with Application.getAppIcon()
-
-        val name = v!!.findViewById<View>(R.id.demo_authorizations_item_name) as TextView
+        val name = v!!.findViewById<TextView>(R.id.demo_authorizations_item_name)
         name.text = s.name
 
         //TODO: Update usage of ID as placeholder for potential context being sent
-        val context = v.findViewById<View>(R.id.demo_authorizations_item_context) as TextView
+        val context = v.findViewById<TextView>(R.id.demo_authorizations_item_context)
         context.text = s.id
-
-        val millisAgo = s.getCreatedAgoMillis(mContext)
-
-        val action = v.findViewById<View>(R.id.demo_authorizations_item_text_action) as TextView
+        val millisAgo = System.currentTimeMillis() - s.createdAtMillis
+        val action = v.findViewById<TextView>(R.id.demo_authorizations_item_text_action)
         action.text = String.format(Locale.getDefault(), "%d seconds ago", millisAgo / 1000)
-
-        /*
-        TextView status = (TextView) v.findViewById(R.id.demo_authorizations_item_text_status);
-        status.setText(a.getStatus().toUpperCase());
-
-        TextView transactional = (TextView) v.findViewById(R.id.demo_authorizations_item_text_transactional);
-        transactional.setText(a.isTransactional() ? "TRANSACTIONAL" : "");
-        */
-
-        val button = v.findViewById<View>(R.id.demo_authorizations_item_button) as Button
+        val button = v.findViewById<Button>(R.id.demo_authorizations_item_button)
         button.text = "LOG OUT"
         button.setOnClickListener(mInternalClickListener)
         button.tag = position
-
         return v
     }
+
 }

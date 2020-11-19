@@ -1,8 +1,8 @@
 package com.launchkey.android.authenticator.demo.ui.adapter;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +12,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.launchkey.android.authenticator.demo.R;
-import com.launchkey.android.authenticator.sdk.session.Session;
+import com.launchkey.android.authenticator.sdk.core.authentication_management.Session;
 
 import java.util.List;
 import java.util.Locale;
@@ -57,7 +57,7 @@ public class DemoSessionsAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, @Nullable View convertView, @Nullable ViewGroup parent) {
 
         //Relying on the authorizations layout for items
 
@@ -79,7 +79,7 @@ public class DemoSessionsAdapter extends BaseAdapter {
         TextView context = v.findViewById(R.id.demo_authorizations_item_context);
         context.setText(s.getId());
 
-        long millisAgo = s.getCreatedAgoMillis(this.context);
+        long millisAgo = System.currentTimeMillis() - s.getCreatedAtMillis();
 
         TextView action = v.findViewById(R.id.demo_authorizations_item_text_action);
         action.setText(String.format(Locale.getDefault(), "%d seconds ago", (millisAgo / 1000)));

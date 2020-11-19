@@ -1,86 +1,43 @@
 package com.launchkey.android.authenticator.demo.ui.activity
 
-import android.content.DialogInterface
+import android.app.NotificationManager
+import android.content.Context
 import android.os.Bundle
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.Toolbar
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.launchkey.android.authenticator.demo.R
-import com.launchkey.android.authenticator.demo.util.Utils
-import com.launchkey.android.authenticator.sdk.DeviceUnlinkedEventCallback
-import com.launchkey.android.authenticator.sdk.auth.AuthRequest
-import com.launchkey.android.authenticator.sdk.auth.AuthRequestManager
-import com.launchkey.android.authenticator.sdk.auth.event.AuthRequestResponseEventCallback
-import com.launchkey.android.authenticator.sdk.auth.event.GetAuthRequestEventCallback
-import com.launchkey.android.authenticator.sdk.error.BaseError
-import com.launchkey.android.authenticator.sdk.error.DeviceNotLinkedError
+import com.launchkey.android.authenticator.demo.databinding.DemoActivityAuthrequestBinding
+import com.launchkey.android.authenticator.demo.util.Utils.getMessageForBaseError
+import com.launchkey.android.authenticator.sdk.core.exception.DeviceNotLinkedException
+import com.launchkey.android.authenticator.sdk.ui.AuthRequestFragment
 
-class AuthRequestActivity : BaseDemoActivity() {
-
-    private var mOnUnlink: DeviceUnlinkedEventCallback? = null
-    private var mAuthRequestManager: AuthRequestManager? = null
-    private var mOnRequest: GetAuthRequestEventCallback? = null
-    private var mOnResponse: AuthRequestResponseEventCallback? = null
-
-    private var mNoRequestsView: TextView? = null
-    private var mToolbar: Toolbar? = null
-
+class AuthRequestActivity : BaseDemoActivity<DemoActivityAuthrequestBinding>(R.layout.demo_activity_authrequest), AuthRequestFragment.Listener {
+    private var authRequestActivityViewModel: AuthRequestActivityViewModel? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.demo_activity_authrequest)
-
-        mToolbar = findViewById<View>(R.id.demo_activity_authrequest_toolbar) as Toolbar
-        setSupportActionBar(mToolbar)
-        supportActionBar!!.title = "Request"
-
-        mNoRequestsView = findViewById<View>(R.id.demo_activity_authrequest_norequest) as TextView
-
-        mOnUnlink = object : DeviceUnlinkedEventCallback() {
-            override fun onEventResult(ok: Boolean, e: BaseError?, o: Any?) {
-
-                finish()
-            }
-        }
-
-        mAuthRequestManager = AuthRequestManager.getInstance(this)
-
-        mOnRequest = object : GetAuthRequestEventCallback() {
-
-            override fun onEventResult(successful: Boolean, error: BaseError?, authRequest: AuthRequest?) {
-
+        binding = DemoActivityAuthrequestBinding.bind(findViewById(R.id.demo_activity_authrequest_root))
+        authRequestActivityViewModel = ViewModelProvider(this, defaultViewModelProviderFactory).get(AuthRequestActivityViewModel::class.java)
+        authRequestActivityViewModel!!.getState().observe(this, Observer { state ->
+            if (state is AuthRequestActivityViewModel.State.Success) {
                 updateNoRequestsView(false)
-
-                if (!successful) {
-                    //let the callback handle the error
-                    mOnResponse!!.onEventResult(false, error, null)
-                }
+                clearNotifications()
+            } else if (state is AuthRequestActivityViewModel.State.Loading) {
+                updateNoRequestsView(true)
+            } else if (state is AuthRequestActivityViewModel.State.Failed) {
+                handleError(state.exception)
+                updateNoRequestsView(false)
+                clearNotifications()
             }
-        }
-
-        mOnResponse = object : AuthRequestResponseEventCallback() {
-            override fun onEventResult(successful: Boolean, error: BaseError?, authorized: Boolean?) {
-
-                if (successful) {
-                    mOnRequest!!.onEventResult(true, null, null)
-                } else {
-                    if (error is DeviceNotLinkedError) {
-                        showUnlinkedDialog()
-                    } else {
-                        //this will potentially cover ExpiredAuthRequestError most of the time
-                        Toast.makeText(this@AuthRequestActivity, Utils.getMessageForBaseError(error),
-                                Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                finishIfNecessary()
-            }
-        }
-
-        updateNoRequestsView(false)
+        })
+        val toolbar = binding!!.demoActivityAuthrequestToolbar
+        toolbar.title = "Request"
+        setSupportActionBar(toolbar)
+        updateNoRequestsView(true)
+        onUiChange(authRequestActivityViewModel!!.currentAuthRequest != null)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -89,81 +46,47 @@ class AuthRequestActivity : BaseDemoActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-        when (item.itemId) {
-            R.id.menu_refresh -> {
-                onRefresh()
-                return true
+        if (item.itemId == R.id.menu_refresh) {
+            if (authenticatorManager.isDeviceLinked) {
+                authRequestActivityViewModel!!.checkForAuthRequest()
+            } else {
+                finish()
             }
+            return true
         }
-
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onResume() {
-        super.onResume()
-        mAuthRequestManager!!.registerForEvents(mOnRequest, mOnResponse)
-        authenticatorManager.registerForEvents(mOnUnlink)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mAuthRequestManager!!.unregisterForEvents(mOnRequest, mOnResponse)
-        authenticatorManager.unregisterForEvents(mOnUnlink)
+    private fun handleError(e: Exception) {
+        if (e !is DeviceNotLinkedException) {
+            //this will potentially cover ExpiredAuthRequestError most of the time
+            Toast.makeText(this@AuthRequestActivity, getMessageForBaseError(e),
+                    Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onBackPressed() {
-
-        if (hasPending()) {
+        if (authRequestActivityViewModel!!.currentAuthRequest != null) {
             return
         }
-
         super.onBackPressed()
     }
 
-    private fun onRefresh() {
-        updateNoRequestsView(true)
-        mAuthRequestManager!!.check()
-    }
-
     private fun updateNoRequestsView(isChecking: Boolean) {
-
-        val messageRes = if (isChecking)
-            R.string.demo_activity_authrequest_refreshing_message
-        else
-            R.string.demo_activity_authrequest_norequests_message
-        mNoRequestsView!!.setText(messageRes)
-
-        mNoRequestsView!!.visibility = if (hasPending()) View.GONE else View.VISIBLE
+        val messageRes = if (isChecking) R.string.demo_activity_authrequest_refreshing_message else R.string.demo_activity_authrequest_norequests_message
+        binding!!.demoActivityAuthrequestNorequest.setText(messageRes)
     }
 
-    private fun finishIfNecessary() {
+    private fun clearNotifications() {
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager?.cancelAll()
+    }
 
-        if (!hasPending()) {
-
-            finish()
+    override fun onUiChange(requestShown: Boolean) {
+        if (!requestShown) {
+            authRequestActivityViewModel!!.currentAuthRequest = null
+            updateNoRequestsView(false)
         }
-    }
-
-    private fun hasPending(): Boolean {
-        return mAuthRequestManager!!.pendingAuthRequest != null
-    }
-
-    private fun showUnlinkedDialog() {
-
-        val positiveClick = DialogInterface.OnClickListener { dialog, which -> finish() }
-
-        val alertDialog = AlertDialog.Builder(this)
-                .setTitle(R.string.demo_activity_authrequest_dialog_unlinked_title)
-                .setMessage(R.string.demo_activity_authrequest_dialog_unlinked_message)
-                .setPositiveButton(R.string.demo_generic_ok, positiveClick)
-                .create()
-
-        alertDialog.show()
-
-        val messageView = alertDialog.findViewById<View>(android.R.id.message) as TextView?
-        if (messageView != null) {
-            messageView.textAlignment = View.TEXT_ALIGNMENT_VIEW_START
-        }
+        binding!!.demoActivityAuthrequestNorequest.visibility = if (requestShown) View.GONE else View.VISIBLE
     }
 }

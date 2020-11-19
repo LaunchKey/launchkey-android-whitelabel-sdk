@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/custom_sec_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     >
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/sec_toolbar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/demo_toolbar_height"
@@ -16,7 +17,7 @@
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         />
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/sec_security"
         android:name="com.launchkey.android.authenticator.sdk.ui.SecurityFragment"
         android:layout_width="match_parent"
