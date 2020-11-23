@@ -1,4 +1,6 @@
-# Multifactor Authentication Mobile Authenticator SDK for Android
+# Multifactor Authentication Mobile Authenticator SDK for Android 
+
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/iovation/launchkey-android-authenticator-sdk?label=latest%20release)
 
   * [Getting Started](#gettingstarted)
   * [Overview](#overview)
@@ -24,6 +26,24 @@ Factors. Check the developer documentation in the links below for more informati
 Multifactor Authentication is an identity and access management platform. The Authenticator SDK enables 
 developers to quickly integrate the Multifactor Authentication platform directly 
 in their existing Android applications.
+
+The Multifactor Authentication Mobile Authenticator SDKs are split into separate <b>Core</b> and <b>UI</b> SDKs.
+To use them, include the repository in your <i>project</i> level <b>build.gradle</b> file and the dependencies in your <i>app</i> level <b>build.gradle</b> file.
+```gradle
+repositories {
+   maven {
+       url "https://github.com/iovation/launchkey-android-authenticator-sdk/raw/master/lk-auth-sdk"
+   }
+}
+
+dependencies {
+    // Core Auth SDK
+    implementation 'com.launchkey.android.authenticator.sdk:lk-auth-sdk-core:<version>'
+
+    // (UI) Auth SDK
+    implementation 'com.launchkey.android.authenticator.sdk:lk-auth-sdk-ui:<version>'
+}
+```
 
 Developer documentation for using the Authenticator SDK is found [here](https://docs.launchkey.com/authenticator-sdk/integrate-authenticator-sdk-android-v3.html).
 
