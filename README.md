@@ -1,4 +1,4 @@
-# LaunchKey Authenticator SDK for Android
+# Multifactor Authentication Mobile Authenticator SDK for Android
 
   * [Getting Started](#gettingstarted)
   * [Overview](#overview)
@@ -15,14 +15,14 @@ resource strings in any xml resource file under the res folder of the project:
 <string name="authenticator_googlemapsv2_key">YOUR GOOGLE MAPS API V2 ANDROID KEY HERE</string>
 ```
 
-The Authenticator SDK key is given by the LaunchKey Dashboard, and the Google Maps API v2 
+The Authenticator SDK key is given by the Multifactor Authentication Dashboard, and the Google Maps API v2 
 key will allow you to use Google Maps in order to set Geofencing as one of the Security 
 Factors. Check the developer documentation in the links below for more information.
 
 # <a name="overview"></a>Overview
 
-LaunchKey is an identity and access management platform. The Authenticator SDK enables 
-developers to quickly integrate the LaunchKey platform directly 
+Multifactor Authentication is an identity and access management platform. The Authenticator SDK enables 
+developers to quickly integrate the Multifactor Authentication platform directly 
 in their existing Android applications.
 
 Developer documentation for using the Authenticator SDK is found [here](https://docs.launchkey.com/authenticator-sdk/integrate-authenticator-sdk-android-v3.html).
@@ -30,12 +30,12 @@ Developer documentation for using the Authenticator SDK is found [here](https://
 #  <a name="links"></a>Links
 
   Check our [documentation](https://docs.launchkey.com/authenticator-sdk/before-you-begin.html) for setting up
-  a LaunchKey Service and the official [Android Development website](https://d.android.com)
+  a Multifactor Authentication Service and the official [Android Development website](https://d.android.com)
   for everything else regarding Android.
 
 #  <a name="support"></a>Support
 
 ## FAQ's
 
-Browse FAQ's or submit a question to the LaunchKey support team for both
-technical and non-technical issues. Visit the LaunchKey Support website [here](https://www.iovation.com/contact).
+Browse FAQ's or submit a question to the Multifactor Authentication support team for both
+technical and non-technical issues. Visit the Multifactor Authentication Support website [here](https://www.iovation.com/contact).
