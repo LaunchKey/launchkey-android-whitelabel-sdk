@@ -41,7 +41,7 @@ dependencies {
     implementation 'com.launchkey.android.authenticator.sdk:lk-auth-sdk-core:<version>'
 
     // (UI) Auth SDK
-    implementation 'com.launchkey.android.authenticator.sdk:lk-auth-sdk-ui:<version>'
+    implementation 'com.launchkey.android.authenticator.sdk:lk-auth-sdk:<version>'
 }
 ```
 
