@@ -15,7 +15,7 @@ class CustomLogoutFragment : BaseDemoFragment<ViewBinding>() {
     private var logoutDialog: ProgressDialog? = null
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        logoutDialog = ProgressDialog(activity, R.style.Theme_WhiteLabel_Dialog)
+        logoutDialog = ProgressDialog(activity, R.style.AuthenticatorAlertDialogStyle)
         logoutDialog!!.isIndeterminate = true
         logoutDialog!!.setCancelable(false)
         logoutDialog!!.setMessage("Custom Logout...")

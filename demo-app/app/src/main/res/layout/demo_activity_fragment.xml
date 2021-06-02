@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/demo_activity_fragment_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
@@ -13,13 +13,10 @@
         android:minHeight="@dimen/demo_toolbar_height"
         android:background="?attr/colorPrimary"
         app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-        />
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-    <FrameLayout
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/demo_activity_fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="100"
-        />
+        android:layout_height="match_parent" />
 </LinearLayout>

@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.launchkey.android.authenticator.demo.javaApp",
+  "variantName": "processJavaAppNpGoogleMapsFips_offReleaseResources",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "versionCode": 1,
+      "versionName": "1.0.googleMaps",
+      "outputFile": "app-javaApp-np-googleMaps-fips_off-release.apk"
+    }
+  ]
+}

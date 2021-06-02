@@ -91,4 +91,5 @@
 
     <string name="menu_refresh">Refresh</string>
     <string name="menu_add">Add</string>
+    <string name="theming_button_name">Theming</string>
 </resources>

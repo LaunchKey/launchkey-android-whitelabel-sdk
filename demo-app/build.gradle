@@ -23,7 +23,7 @@ plugins {
 allprojects {
     subprojects { project ->
         project.ext.LaunchKeyCoreSDK = 'com.launchkey.android.authenticator.sdk:lk-auth-sdk-core:2.0.0'
-        project.ext.LaunchKeyUISDK = 'com.launchkey.android.authenticator.sdk:lk-auth-sdk:5.0.0'
+        project.ext.LaunchKeyUISDK = 'com.launchkey.android.authenticator.sdk:lk-auth-sdk:5.1.0'
     }
     repositories {
         jcenter()

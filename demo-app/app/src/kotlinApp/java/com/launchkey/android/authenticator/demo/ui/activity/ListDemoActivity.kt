@@ -5,10 +5,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemClickListener
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.annotation.StringRes
+import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import com.launchkey.android.authenticator.demo.R
 import com.launchkey.android.authenticator.demo.databinding.DemoActivityListBinding
+import com.launchkey.android.authenticator.demo.ui.activity.GenericFragmentDemoActivity
 import com.launchkey.android.authenticator.demo.ui.adapter.DemoFeatureAdapter
 import com.launchkey.android.authenticator.demo.ui.fragment.*
 import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager
@@ -21,6 +24,8 @@ import com.launchkey.android.authenticator.sdk.ui.fragment.SessionsFragment
 import java.util.*
 
 class ListDemoActivity : BaseDemoActivity<DemoActivityListBinding>(R.layout.demo_activity_list), OnItemClickListener {
+
+    private val launcher = registerForActivityResult(StartActivityForResult()) { result -> sdkKey = if (result == null) null else result.data!!.getStringExtra(EXTRA_SDK_KEY) }
     private var mAdapter: DemoFeatureAdapter? = null
     private var sdkKey: String? = null
     private val mDeviceLinkedCallback: DeviceLinkedEventCallback = object : DeviceLinkedEventCallback() {
@@ -113,8 +118,9 @@ class ListDemoActivity : BaseDemoActivity<DemoActivityListBinding>(R.layout.demo
     override fun onItemClick(parent: AdapterView<*>?, view: View, position: Int, id: Long) {
         val featureStringId = mAdapter!!.getItem(position)
         val linked = authenticatorManager.isDeviceLinked
-        var fragmentClassName: Class<*>? = null
+        var fragmentClassName: Class<out Fragment?>? = null
         var goBackOnUnlink = false
+        var forResult = false
         when (featureStringId) {
             R.string.demo_activity_list_feature_link_default_manual -> if (linked) {
                 showError(ERROR_DEVICE_LINKED)
@@ -180,26 +186,36 @@ class ListDemoActivity : BaseDemoActivity<DemoActivityListBinding>(R.layout.demo
                 goBackOnUnlink = true
             }
             R.string.demo_activity_list_feature_config -> {
-                val appConfigsActivity = Intent(this, AppConfigsActivity::class.java)
-                appConfigsActivity.putExtra(EXTRA_SDK_KEY, sdkKey)
-                startActivityForResult(appConfigsActivity, 0)
+                fragmentClassName = AppConfigsFragment::class.java
+                forResult = true
             }
         }
         if (fragmentClassName != null) {
-
-            //The full class name of a Fragment will be passed to the activity
-            // so it's automatically instantiated by name and placed in a container.
             val fragmentActivity = Intent(this, GenericFragmentDemoActivity::class.java)
+            fragmentActivity.putExtra(EXTRA_SDK_KEY, sdkKey)
             fragmentActivity.putExtra(GenericFragmentDemoActivity.EXTRA_FRAGMENT_CLASS, fragmentClassName.canonicalName)
             fragmentActivity.putExtra(GenericFragmentDemoActivity.EXTRA_TITLE, getString(featureStringId))
             fragmentActivity.putExtra(GenericFragmentDemoActivity.EXTRA_GO_BACK_ON_UNLINK, goBackOnUnlink)
-            startActivity(fragmentActivity)
+            startGenericFragmentActivity(fragmentClassName, featureStringId, goBackOnUnlink, forResult)
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        sdkKey = data?.getStringExtra(EXTRA_SDK_KEY)
+    private fun startGenericFragmentActivity(fragmentClassName: Class<out Fragment?>,
+                                             @StringRes featureStringId: Int,
+                                             goBackOnUnlink: Boolean,
+                                             forResult: Boolean) {
+        //The full class name of a Fragment will be passed to the activity
+        // so it's automatically instantiated by name and placed in a container.
+        val i = Intent(this, GenericFragmentDemoActivity::class.java)
+        i.putExtra(EXTRA_SDK_KEY, sdkKey)
+        i.putExtra(GenericFragmentDemoActivity.EXTRA_FRAGMENT_CLASS, fragmentClassName.canonicalName)
+        i.putExtra(GenericFragmentDemoActivity.EXTRA_TITLE, getString(featureStringId))
+        i.putExtra(GenericFragmentDemoActivity.EXTRA_GO_BACK_ON_UNLINK, goBackOnUnlink)
+        if (forResult) {
+            launcher.launch(i)
+        } else {
+            startActivity(i)
+        }
     }
 
     private fun showError(messageRes: Int) {

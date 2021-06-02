@@ -2,17 +2,16 @@ package com.launchkey.android.authenticator.demo.ui.fragment;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.CompoundButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CompoundButton;
 
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.databinding.DemoFragmentLinkBinding;
+import com.launchkey.android.authenticator.demo.ui.activity.ListDemoActivity;
 import com.launchkey.android.authenticator.demo.util.Utils;
 import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager;
 import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
@@ -54,7 +53,7 @@ public class CustomLinkingFragment extends BaseDemoFragment<DemoFragmentLinkBind
             }
         });
 
-        mLinkingDialog = new ProgressDialog(getActivity(), R.style.Theme_WhiteLabel_Dialog);
+        mLinkingDialog = new ProgressDialog(getActivity(), R.style.AuthenticatorAlertDialogStyle);
         mLinkingDialog.setIndeterminate(true);
     }
 
@@ -84,8 +83,7 @@ public class CustomLinkingFragment extends BaseDemoFragment<DemoFragmentLinkBind
         final String deviceName = binding.demoLinkCheckboxDevicenameCustom.isChecked() ? customDeviceName : null;
         final boolean overrideNameIfUsed = binding.demoLinkCheckboxDevicenameOverride.isChecked();
 
-        compositeDisposable.add(mAuthenticatorManager.linkDevice(getString(R.string.authenticator_sdk_key), linkingCode, deviceName, overrideNameIfUsed, new DeviceLinkedEventCallback() {
-
+        compositeDisposable.add(mAuthenticatorManager.linkDevice(getArguments().getString(ListDemoActivity.EXTRA_SDK_KEY), linkingCode, deviceName, overrideNameIfUsed, new DeviceLinkedEventCallback() {
             @Override
             public void onSuccess(@NonNull final Device device) {
                 mLinkingDialog.dismiss();

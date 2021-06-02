@@ -33,7 +33,7 @@ open class BaseDemoActivity<T : ViewBinding> : AppCompatActivity, BaseDemoView {
     constructor() : super() {}
     constructor(layoutId: Int) : super(layoutId) {}
 
-    override val authenticatorUIManager: AuthenticatorUIManager = AuthenticatorUIManager.getInstance()
+    override val authenticatorUIManager: AuthenticatorUIManager = AuthenticatorUIManager.instance
 
     override fun onDestroy() {
         binding = null

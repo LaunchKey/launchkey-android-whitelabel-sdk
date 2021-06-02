@@ -5,11 +5,11 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.databinding.DemoActivityFragmentBinding;
+import com.launchkey.android.authenticator.demo.ui.fragment.CustomLinkingFragment;
 import com.launchkey.android.authenticator.sdk.core.authentication_management.Device;
 import com.launchkey.android.authenticator.sdk.core.authentication_management.event_callback.UnlinkDeviceEventCallback;
 import com.launchkey.android.authenticator.sdk.core.exception.DeviceUnlinkedButFailedToNotifyServerException;
@@ -75,7 +75,8 @@ public class GenericFragmentDemoActivity extends BaseDemoActivity<DemoActivityFr
         Fragment f;
 
         try {
-            f = Fragment.instantiate(this, fragmentClass);
+            f = getSupportFragmentManager().getFragmentFactory().instantiate(getClassLoader(), fragmentClass);
+            f.setArguments(extras);
         } catch (Exception e) {
             finish();
             return;

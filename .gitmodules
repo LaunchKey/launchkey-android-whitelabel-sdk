@@ -1,0 +1,3 @@
+[submodule "lk-auth-ui-sdk"]
+	path = lk-auth-ui-sdk
+	url = https://github.com/lacaprjc/mfa-auth-sdk-android.git

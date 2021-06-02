@@ -5,14 +5,20 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.launchkey.android.authenticator.demo.R;
 import com.launchkey.android.authenticator.demo.databinding.DemoActivityListBinding;
 import com.launchkey.android.authenticator.demo.ui.adapter.DemoFeatureAdapter;
+import com.launchkey.android.authenticator.demo.ui.fragment.AppConfigsFragment;
 import com.launchkey.android.authenticator.demo.ui.fragment.CustomDevicesFragment;
 import com.launchkey.android.authenticator.demo.ui.fragment.CustomLinkingFragment;
 import com.launchkey.android.authenticator.demo.ui.fragment.CustomLogoutFragment;
@@ -82,6 +88,13 @@ public class ListDemoActivity extends BaseDemoActivity<DemoActivityListBinding> 
     public ListDemoActivity() {
         super(R.layout.demo_activity_list);
     }
+
+    private ActivityResultLauncher<Intent> launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+        @Override
+        public void onActivityResult(@Nullable final ActivityResult result) {
+            sdkKey = result == null ? null : result.getData().getStringExtra(ListDemoActivity.EXTRA_SDK_KEY);
+        }
+    });
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -171,9 +184,9 @@ public class ListDemoActivity extends BaseDemoActivity<DemoActivityListBinding> 
 
         boolean linked = getAuthenticatorManager().isDeviceLinked();
 
-        Class fragmentClassName = null;
+        Class<? extends Fragment> fragmentClassName = null;
         boolean goBackOnUnlink = false;
-
+        boolean forResult = false;
         switch (featureStringId) {
             case R.string.demo_activity_list_feature_link_default_manual:
                 if (linked) {
@@ -273,29 +286,38 @@ public class ListDemoActivity extends BaseDemoActivity<DemoActivityListBinding> 
 
                 break;
             case R.string.demo_activity_list_feature_config:
-                Intent appConfigsActivity = new Intent(this, AppConfigsActivity.class);
-                appConfigsActivity.putExtra(ListDemoActivity.EXTRA_SDK_KEY, sdkKey);
-                startActivityForResult(appConfigsActivity, 0);
+                fragmentClassName = AppConfigsFragment.class;
+                forResult = true;
                 break;
         }
 
         if (fragmentClassName != null) {
-
-            //The full class name of a Fragment will be passed to the activity
-            // so it's automatically instantiated by name and placed in a container.
             Intent fragmentActivity = new Intent(this, GenericFragmentDemoActivity.class);
+            fragmentActivity.putExtra(ListDemoActivity.EXTRA_SDK_KEY, sdkKey);
             fragmentActivity.putExtra(GenericFragmentDemoActivity.EXTRA_FRAGMENT_CLASS, fragmentClassName.getCanonicalName());
             fragmentActivity.putExtra(GenericFragmentDemoActivity.EXTRA_TITLE, getString(featureStringId));
             fragmentActivity.putExtra(GenericFragmentDemoActivity.EXTRA_GO_BACK_ON_UNLINK, goBackOnUnlink);
 
-            startActivity(fragmentActivity);
+            startGenericFragmentActivity(fragmentClassName, featureStringId, goBackOnUnlink, forResult);
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        sdkKey = data == null ? null : data.getStringExtra(ListDemoActivity.EXTRA_SDK_KEY);
+    private void startGenericFragmentActivity(final Class<? extends Fragment> fragmentClassName,
+                                              @StringRes final int featureStringId,
+                                              final boolean goBackOnUnlink,
+                                              final boolean forResult) {
+        //The full class name of a Fragment will be passed to the activity
+        // so it's automatically instantiated by name and placed in a container.
+        Intent i = new Intent(this, GenericFragmentDemoActivity.class);
+        i.putExtra(ListDemoActivity.EXTRA_SDK_KEY, sdkKey);
+        i.putExtra(GenericFragmentDemoActivity.EXTRA_FRAGMENT_CLASS, fragmentClassName.getCanonicalName());
+        i.putExtra(GenericFragmentDemoActivity.EXTRA_TITLE, getString(featureStringId));
+        i.putExtra(GenericFragmentDemoActivity.EXTRA_GO_BACK_ON_UNLINK, goBackOnUnlink);
+        if (forResult) {
+            launcher.launch(i);
+        } else {
+            startActivity(i);
+        }
     }
 
     private void showError(int messageRes) {

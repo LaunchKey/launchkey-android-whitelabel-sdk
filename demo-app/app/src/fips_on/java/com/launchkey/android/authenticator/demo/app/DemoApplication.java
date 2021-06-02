@@ -45,7 +45,6 @@ public class DemoApplication extends Application {
 
         try {
             System.setProperty("com.safelogic.cryptocomply.fips.approved_only", "true");
-            System.setProperty("com.safelogic.cryptocomply.rsa.allow_multi_use", "true");
 
             if (System.getProperty("java.vm.name").equals("Dalvik")) {
                 CryptoComplyFipsLoader.install(this);

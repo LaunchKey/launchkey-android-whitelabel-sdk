@@ -21,7 +21,7 @@ public class CustomLogoutFragment extends BaseDemoFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        logoutDialog = new ProgressDialog(getActivity(), R.style.Theme_WhiteLabel_Dialog);
+        logoutDialog = new ProgressDialog(getActivity(), R.style.AuthenticatorAlertDialogStyle);
         logoutDialog.setIndeterminate(true);
         logoutDialog.setCancelable(false);
         logoutDialog.setMessage("Custom Logout...");
