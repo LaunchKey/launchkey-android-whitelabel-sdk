@@ -21,6 +21,10 @@ The Authenticator SDK key is given by the Multifactor Authentication Dashboard, 
 key will allow you to use Google Maps in order to set Geofencing as one of the Security 
 Factors. Check the developer documentation in the links below for more information.
 
+
+Additionally, the [UI wrapper SDK](https://github.com/lacaprjc/mfa-auth-sdk-android) is optionally included as a git submodule. It is not required to build the demo application but added for convenience.
+Make sure to clone with the --recurse-submodules git flag. Learn more about how to include the submodule into your project [here](https://github.com/lacaprjc/mfa-auth-sdk-android)
+
 # <a name="overview"></a>Overview
 
 Multifactor Authentication is an identity and access management platform. The Authenticator SDK enables 
