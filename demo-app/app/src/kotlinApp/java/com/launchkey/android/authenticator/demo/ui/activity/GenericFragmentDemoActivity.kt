@@ -47,8 +47,9 @@ class GenericFragmentDemoActivity : BaseDemoActivity<DemoActivityFragmentBinding
         //Instantiate the Fragment by name that was passed via extra (Bundle) and if not null,
         // then place it in the container.
         val f: Fragment
-        f = try {
-            Fragment.instantiate(this, fragmentClass)
+        try {
+            f = supportFragmentManager.fragmentFactory.instantiate(classLoader, fragmentClass)
+            f.arguments = extras
         } catch (e: Exception) {
             finish()
             return

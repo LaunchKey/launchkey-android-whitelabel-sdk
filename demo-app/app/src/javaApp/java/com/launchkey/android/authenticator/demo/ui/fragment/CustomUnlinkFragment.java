@@ -22,7 +22,7 @@ public class CustomUnlinkFragment extends BaseDemoFragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        unlinkingDialog = new ProgressDialog(getActivity(), R.style.Theme_WhiteLabel_Dialog);
+        unlinkingDialog = new ProgressDialog(getActivity(), R.style.AuthenticatorAlertDialogStyle);
         unlinkingDialog.setIndeterminate(true);
         unlinkingDialog.setCancelable(false);
         unlinkingDialog.setMessage("Custom Unlinking...");

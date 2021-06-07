@@ -6,6 +6,7 @@ import android.view.View
 import androidx.appcompat.app.AlertDialog
 import com.launchkey.android.authenticator.demo.R
 import com.launchkey.android.authenticator.demo.databinding.DemoFragmentLinkBinding
+import com.launchkey.android.authenticator.demo.ui.activity.ListDemoActivity
 import com.launchkey.android.authenticator.demo.util.Utils.finish
 import com.launchkey.android.authenticator.sdk.core.authentication_management.AuthenticatorManager
 import com.launchkey.android.authenticator.sdk.core.authentication_management.Device
@@ -26,7 +27,7 @@ class CustomLinkingFragment : BaseDemoFragment<DemoFragmentLinkBinding>(R.layout
         binding = DemoFragmentLinkBinding.bind(root)
         binding!!.demoLinkCheckboxDevicenameCustom.setOnCheckedChangeListener { buttonView, isChecked -> binding!!.demoLinkEditName.isEnabled = isChecked }
         binding!!.demoLinkButton.setOnClickListener { onLink() }
-        mLinkingDialog = ProgressDialog(activity, R.style.Theme_WhiteLabel_Dialog)
+        mLinkingDialog = ProgressDialog(activity, R.style.AuthenticatorAlertDialogStyle)
         mLinkingDialog!!.isIndeterminate = true
     }
 
@@ -51,7 +52,8 @@ class CustomLinkingFragment : BaseDemoFragment<DemoFragmentLinkBinding>(R.layout
         mLinkingDialog!!.setMessage("Verifying linking code...")
         val deviceName = if (binding!!.demoLinkCheckboxDevicenameCustom.isChecked) customDeviceName else null
         val overrideNameIfUsed = binding!!.demoLinkCheckboxDevicenameOverride.isChecked
-        compositeDisposable.add(mAuthenticatorManager.linkDevice(getString(R.string.authenticator_sdk_key), linkingCode, deviceName, overrideNameIfUsed, object : DeviceLinkedEventCallback() {
+
+        compositeDisposable.add(mAuthenticatorManager.linkDevice(requireArguments().getString(ListDemoActivity.EXTRA_SDK_KEY)!!, linkingCode, deviceName, overrideNameIfUsed, object : DeviceLinkedEventCallback() {
             override fun onSuccess(device: Device) {
                 mLinkingDialog!!.dismiss()
                 finish(this@CustomLinkingFragment)
@@ -65,7 +67,7 @@ class CustomLinkingFragment : BaseDemoFragment<DemoFragmentLinkBinding>(R.layout
     }
 
     private fun showAlert(title: String, message: String?) {
-        AlertDialog.Builder(activity!!)
+        AlertDialog.Builder(requireActivity())
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton("OK", null)

@@ -14,7 +14,7 @@ open class BaseDemoFragment<T : ViewBinding> : Fragment, BaseDemoView {
     constructor() : super() {}
     constructor(@LayoutRes layoutId: Int) : super(layoutId) {}
 
-    override val authenticatorUIManager: AuthenticatorUIManager = AuthenticatorUIManager.getInstance()
+    override val authenticatorUIManager: AuthenticatorUIManager = AuthenticatorUIManager.instance
 
     override fun onDestroyView() {
         binding = null

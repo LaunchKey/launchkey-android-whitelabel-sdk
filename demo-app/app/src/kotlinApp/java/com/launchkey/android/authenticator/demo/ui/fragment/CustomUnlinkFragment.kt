@@ -14,7 +14,7 @@ class CustomUnlinkFragment : BaseDemoFragment<ViewBinding>() {
     private var unlinkingDialog: ProgressDialog? = null
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        unlinkingDialog = ProgressDialog(activity, R.style.Theme_WhiteLabel_Dialog)
+        unlinkingDialog = ProgressDialog(activity, R.style.AuthenticatorAlertDialogStyle)
         unlinkingDialog!!.isIndeterminate = true
         unlinkingDialog!!.setCancelable(false)
         unlinkingDialog!!.setMessage("Custom Unlinking...")

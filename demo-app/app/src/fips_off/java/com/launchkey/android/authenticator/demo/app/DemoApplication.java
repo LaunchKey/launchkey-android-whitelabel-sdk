@@ -50,7 +50,6 @@ public class DemoApplication extends Application {
                 .helpMenuItems(false)
                 .button(ContextCompat.getDrawable(this, R.drawable.pinpad_button_bg), Color.WHITE)
                 .buttonNegative(new ColorDrawable(Color.RED), Color.CYAN)
-                .authSlider(Color.YELLOW, Color.BLUE, Color.RED, Color.GREEN, Color.BLACK)
                 .circleCode(Color.MAGENTA, Color.GREEN)
                 .pinCode(ContextCompat.getDrawable(this, R.drawable.lk_textbutton_background), Color.YELLOW)
                 .geoFence(ContextCompat.getColor(this, R.color.demo_generic_orange))

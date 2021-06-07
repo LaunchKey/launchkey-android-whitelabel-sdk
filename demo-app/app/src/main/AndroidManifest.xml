@@ -18,13 +18,11 @@
         android:theme="@style/DemoAppTheme"
         android:supportsRtl="true"
         tools:replace="android:theme"
-        tools:ignore="GoogleAppIndexingWarning"
-        >
+        tools:ignore="GoogleAppIndexingWarning">
 
         <activity
             android:name=".ui.activity.ListDemoActivity"
-            android:label="@string/app_name"
-            >
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="com.launchkey.android.authenticator.demo.TEST" />
@@ -34,22 +32,18 @@
         </activity>
 
         <activity
-            android:name=".ui.activity.GenericFragmentDemoActivity"
-            />
+            android:name=".ui.activity.GenericFragmentDemoActivity" />
 
         <activity
             android:name=".ui.activity.AuthRequestActivity"
             android:label="@string/demo_activity_authrequest_title"
             android:theme="@style/DemoAppTheme"
-            android:launchMode="singleTask"
-            />
+            android:launchMode="singleTask" />
 
         <activity
             android:name=".ui.activity.CustomSecurityActivity"
             android:label="@string/demo_activity_list_feature_security_custom"
-            android:theme="@style/DemoAppTheme"
-            />
-        <activity android:name=".ui.activity.AppConfigsActivity" />
+            android:theme="@style/DemoAppTheme" />
 
         <!-- Few following XML nodes are Firebase-related -->
 
