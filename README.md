@@ -23,7 +23,7 @@ Factors. Check the developer documentation in the links below for more informati
 
 
 Additionally, the [UI wrapper SDK](https://github.com/lacaprjc/mfa-auth-sdk-android) is optionally included as a git submodule. It is not required to build the demo application but added for convenience.
-Make sure to clone with the --recurse-submodules git flag. Learn more about how to include the submodule into your project [here](https://github.com/lacaprjc/mfa-auth-sdk-android)
+Make sure to clone with the --recurse-submodules git flag. Learn more about how to include the submodule into your project [here](https://github.com/iovation/mfa-auth-sdk-android#running-as-a-submodule)
 
 # <a name="overview"></a>Overview
 
